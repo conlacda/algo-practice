@@ -20,6 +20,13 @@ Output:
 0 0 1 1 1 
 ----------
 Sử dụng thuật toán backtracking để giải
+https://www.puzzle-nonograms.com/
+https://return.co.de/gridsolver/ - optimal algorithm
+#TODO
+Thay vì chọn trắng đen cho 1 ô. Dựa vào hint chọn điểm bắt đầu trên row
+Ví dụ {0,0,0,0,0} {1,2} -> chọn idx 0 -> next_index = 2 -> 3
+                                      -> {1,0,1,1,0}, {1,0,0,1,1}
+                        chọn idx 1 -> next_index = 3
 */
 #include<bits/stdc++.h>
 
