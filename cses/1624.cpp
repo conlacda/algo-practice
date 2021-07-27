@@ -57,5 +57,7 @@ int main(){
     solve(0);
     cout << c;
 }
-"""
-Sử dụng thuật toán backtracking để giải"""
+/*
+Sử dụng thuật toán backtracking để giải
+https://cses.fi/problemset/task/1623/
+*/
