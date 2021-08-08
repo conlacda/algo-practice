@@ -72,3 +72,5 @@ int main() {
     }
 }
 ```
+
+Lưu ý: khi merge 2 SCC lại thì chỉ có 2 đỉnh đầu nối vào nhau - nghĩa là chỉ có parent[a] = b còn mọi children của a vẫn giữ nguyên parent là a. Cần chạy find_set cho từng đỉnh khi so sánh 2 con thay vì so sánh mỗi parent
