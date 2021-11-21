@@ -6,4 +6,4 @@
 
 ## TODO 
 * Polynomial Queries: https://cses.fi/problemset/task/1736
-* https://www.spoj.com/problems/CHAIN/ - DSU 
+* https://www.spoj.com/problems/CHAIN/ - DSU
