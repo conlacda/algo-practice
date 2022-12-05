@@ -1,4 +1,5 @@
 // https://codeforces.com/contest/271/problem/D
+// Submission: https://codeforces.com/contest/271/submission/183965358
 /*
 You've got string s, consisting of small English letters. Some of the English letters are good, the rest are bad.
 
