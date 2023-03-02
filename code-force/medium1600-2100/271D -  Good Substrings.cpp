@@ -1,5 +1,5 @@
 // https://codeforces.com/contest/271/problem/D
-// Submission: https://codeforces.com/contest/271/submission/183965358
+// Submission: https://codeforces.com/contest/271/my
 /*
 You've got string s, consisting of small English letters. Some of the English letters are good, the rest are bad.
 
@@ -49,31 +49,24 @@ using namespace std;
 #include "debug.cpp"
 #else
 #define dbg(...)
+#define destructure(a) #a
 #endif
 
-template<class Iterable> // chỉ chạy với 64bit.
+// Full doc: https://github.com/conlacda/algo-learning/blob/master/string/cp-algorithm/hash-full.md
+template<class Iterable>
 class Hash{
 private:
-    vector<ll> pc;
-    ll factor = 137;
-    ll length;
+    vector<ll> pc; // pre-compute 
+    ll factor = 137; // **
     vector<ll> inv;
     Iterable s, rs;
 public:
     vector<ll> prefix_hash, rprefix_hash;
     char min_char = char(0);
     ll mod_inv(ll a) { ll x, y;auto extended_gcd = [&] (ll a, ll b) -> ll { x = 1; y =0; ll x1 = 0, y1 = 1, a1 = a, b1 = b; while (b1) {ll q = a1 / b1;tie(x, x1) = make_tuple(x1, x - q * x1);tie(y, y1) = make_tuple(y1, y - q * y1);tie(a1, b1) = make_tuple(b1, a1 - q * b1);}return a1;};ll g = extended_gcd(a, mod);if (g != 1) return -1;else x = (x%mod +mod) %mod;return x;}
-    Hash(){}
-    void build(ll length = 200005){
-        ll p = 1;
-        for (ll i=0;i<length;i++){
-            pc.push_back(p);
-            p = (p* factor) % mod;
-        }
-        for (auto v: pc) inv.push_back(mod_inv(v));
-    }
+    void build(ll length = 200005){ ll p = 1; for (ll i=0;i<length;i++){ pc.push_back(p); p = (p* factor) % mod;} for (auto v: pc) inv.push_back(mod_inv(v));}
 
-    void load(Iterable s, bool reverse = false){
+    void load_toward(Iterable s, bool reverse = false){
         vector<ll> *ph;
         Iterable *str;
         if (!reverse) {
@@ -97,13 +90,13 @@ public:
             ph->push_back(hash_value);
         }
     }
-    void rload(Iterable s){ return load(s, true);} // alias for load(reverse=true);
-    void both_load(Iterable s) {
-        assert(inv.size() > 0); // quên chưa chạy hash.build()??
-        load(s); rload(s);
+    void load_backward(Iterable s){ return load_toward(s, true);} // alias for load_toward(reverse=true);
+    void load(Iterable s) {
+        assert((int) pc.size() >= (int) s.size()); // quên chưa chạy hash.build()??
+        load_toward(s); load_backward(s);
     }
     // hash dạng rolling substr- tức là nếu start+length> s.size() thì sẽ vòng lại lấy từ đầu đi tiếp
-    ll substr(ll start, ll length){
+    ll substr_toward(ll start, ll length){
         assert(length <= (ll) s.size()); // assert(start+length <= (ll) s.size()); nếu chỉ muốn range thông thường ko phải dạng rolling
         ll ans = 0;
         if (start + length <= (ll) s.size()) {
@@ -113,12 +106,11 @@ public:
         ll start2ssize = (prefix_hash[s.size()] - prefix_hash[start] + mod) % mod;
         start2ssize = (start2ssize * inv[start]) % mod;
         ll zero2end = prefix_hash[length + start - (ll) s.size()];
-        ans = (start2ssize + zero2end * pc[(ll) s.size() -start]) % mod;
+        ans = (start2ssize + zero2end * pc[(ll) s.size() - start]) % mod;
+        if (ans < 0) ans += mod;
         return ans;
     }
-    // Đoạn này có thể tách xừ ra thành 2 object Hash. reverse_hash(start, length) = hash(s.size()-1-start, length)
-    // Nếu tách ra thì đoạn reverse và đoạn load sẽ gọn hơn và sau dễ chỉnh sửa hơn
-    ll rsubstr(ll start, ll length){
+    ll substr_backward(ll start, ll length){
         assert(length <= (ll) rs.size()); // assert(start+length <= (ll) rs.size()); nếu chỉ muốn range thông thường ko phải dạng rolling
         ll ans = 0;
         start = (ll) rs.size() - 1 - start;
@@ -129,21 +121,22 @@ public:
         ll start2ssize = (rprefix_hash[(ll) rs.size()] - rprefix_hash[start] + mod) % mod;
         start2ssize = (start2ssize * inv[start]) % mod;
         ll zero2end = rprefix_hash[length + start - (ll) rs.size()];
-        ans = (start2ssize + zero2end * pc[(ll) rs.size() -start]) % mod;
+        ans = (start2ssize + zero2end * pc[(ll) rs.size() - start]) % mod;
+        if (ans < 0) ans += mod;
         return ans;
     }
-    pair<ll, ll> both_substr(ll start, ll length){
+    // Lấy ra hash của s.substr(start, length)
+    pair<ll, ll> substr(ll start, ll length) {
         ll end = (start + length >= (ll) s.size()) ? (start + length - (ll) s.size() -1) : (start+length-1);
-        return make_pair(substr(start, length), rsubstr(end, length)); 
+        return make_pair(substr_toward(start, length), substr_backward(end, length));
     }
 };
 struct IntPairHash {
     static_assert(sizeof(int) * 2 == sizeof(size_t));
     size_t operator()(pair<ll, ll> p) const noexcept {
-        return size_t(p.first) << 32 | p.second;
+        return size_t(p.first) << 32 | p.second; // <<32 chỉ chạy với 64 bit.
     }
 };
-
 
 int main(){
     ios::sync_with_stdio(0);
@@ -158,14 +151,13 @@ int main(){
     for (int i=0;i<ap.size();i++){
         m['a' + i] = ap[i] - '0'; 
     }
-    dbg(m);
     int k; cin >> k;
     std::unordered_map<pair<int,int>, bool, IntPairHash> hashed;
     int i=0, j =0;
     int bad = 0;
     Hash<string> hash;
     hash.build(s.size());
-    hash.both_load(s);
+    hash.load(s);
     // Dùng 2 pointer để đếm số bad chars
     while (i<s.size()){
         if (m[s[i]] == 0) bad++;
@@ -174,8 +166,8 @@ int main(){
             j++;
         }
         for (int z=j;z<=i;z++){
-            dbg(hash.both_substr(z, i-z+1), s.substr(z, i-z+1));
-            hashed[hash.both_substr(z, i-z+1)] = true;
+            dbg(hash.substr(z, i-z+1), s.substr(z, i-z+1));
+            hashed[hash.substr(z, i-z+1)] = true;
         }
         i++;
     }
