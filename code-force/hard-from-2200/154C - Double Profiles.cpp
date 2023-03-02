@@ -1,5 +1,7 @@
 // https://codeforces.com/contest/154/problem/C
 // https://codeforces.com/contest/154/my
+// https://codeforces.com/contest/154/problem/C
+// https://codeforces.com/contest/154/my
 #include<bits/stdc++.h>
 
 typedef long long ll;
@@ -14,53 +16,7 @@ using namespace std;
 #define dbg(...)
 #endif
 
-
-template<class Iterable> // chỉ chạy với 64bit.
-class Hash{
-private:
-    vector<ll> pc;
-    ll factor = 137;
-    ll length;
-    vector<ll> inv;
-    Iterable s, rs;
-public:
-    vector<ll> prefix_hash, rprefix_hash;
-    char min_char = char(0);
-    ll mod_inv(ll a) { ll x, y;auto extended_gcd = [&] (ll a, ll b) -> ll { x = 1; y =0; ll x1 = 0, y1 = 1, a1 = a, b1 = b; while (b1) {ll q = a1 / b1;tie(x, x1) = make_tuple(x1, x - q * x1);tie(y, y1) = make_tuple(y1, y - q * y1);tie(a1, b1) = make_tuple(b1, a1 - q * b1);}return a1;};ll g = extended_gcd(a, mod);if (g != 1) return -1;else x = (x%mod +mod) %mod;return x;}
-    Hash(){}
-    void build(ll length = 200005){
-        // Pre compute 
-        ll p = 1;
-        for (ll i=0;i<length;i++){
-            pc.push_back(p);
-            p = (p* factor) % mod;
-        }
-        for (auto v: pc) inv.push_back(mod_inv(v));
-    }
-    ll once(Iterable s){
-        ll hash_value = 0;
-        for (int i=0;i< (int) s.size();i++){
-            int v = s[i] - min_char + 1;
-            hash_value = (hash_value + 1LL*v*pc[i]) % mod;
-        }
-        return hash_value; 
-    }
-    ll ronce(Iterable s){
-        reverse(s.begin(), s.end()); // phần này viết giống dạng once nhanh hơn được 1 chút
-        return once(s);
-    }
-    // lấy ra luôn 1 lúc hash ngược và hash xuôi
-    pair<ll, ll> both_once(Iterable s){
-        return make_pair(once(s), ronce(s));
-    }
-};
-struct IntPairHash {
-    static_assert(sizeof(int) * 2 == sizeof(size_t));
-    size_t operator()(pair<ll, ll> p) const noexcept {
-        return size_t(p.first) << 32 | p.second; // <<32 chỉ chạy với 64 bit.
-    }
-};
-
+<hash-string.snippet>
 long long nCr(ll n, ll r) {
     if(r > n - r) r = n - r; // because C(n, r) == C(n, n - r)
     long long ans = 1;
@@ -153,11 +109,13 @@ int main(){
     */
     vector<Object> s_with_itself, s_without_itself;
     for (ll i =0;i<n;i++){
-        vector<ll> gi = vector(g[i].begin(), g[i].end());
-        s_without_itself.push_back(Object{i, hash.once(gi), hash.ronce(gi)});
+        vector<ll> gi = g[i];
+        pair<ll, ll> ho = hash.hash(gi);
+        s_without_itself.push_back(Object{i, ho.first, ho.second});
         gi.push_back(i);
         sort(gi.begin(), gi.end());
-        s_with_itself.push_back(Object{i, hash.once(gi), hash.ronce(gi)});
+        ho = hash.hash(gi);
+        s_with_itself.push_back(Object{i, ho.first, ho.second});
     }
     DSU dsu(n);
     sort(s_with_itself.begin(), s_with_itself.end());
