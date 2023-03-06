@@ -124,3 +124,96 @@ int main(){
     g.toposort();
     g.solve();
 }
+/*
+Code với template mới
+#include<bits/stdc++.h>
+ 
+typedef long long ll;
+const ll mod = 1e9 + 7;
+#define ld long double
+ 
+using namespace std;
+
+#ifdef DEBUG
+#include "debug.cpp"
+#else
+#define dbg(...)
+#define destructure(a) #a
+#endif
+
+vector<int> toposort(vector<vector<int>> adj, int root = 0){
+    vector<bool> vis(adj.size(), false);
+    vector<int> order;
+    std::function<void(int)> dfs = [&](int u){
+        if (!vis[u]) {
+            vis[u] = true;
+            for (auto v: adj[u]){
+                if (!vis[v]) dfs(v);
+            }
+            order.push_back(u);
+        }
+    };
+    dfs(root);
+    reverse(order.begin(), order.end()); // 1 2 ... N
+    return order;
+}
+
+class Graph{
+public:
+    // General part
+    int V; // vertex num 0->V-1
+    vector<vector<int>> G;
+    Graph(int V){
+        this->V  = V +1;
+        G.resize(this->V, {});
+    }
+    void addEdge(int u, int v){
+        G.at(u).push_back(v);
+    }
+
+    void solve(){
+        vector<int> topo = toposort(this->G, 1);
+        vector<int> ans(V, 1);
+        vector<int> trace(V, -1);
+        for (auto t: topo){
+            for (int i=0;i<(int) G[t].size();i++){
+                int u = G[t][i];
+                if (ans[t] + 1> ans[u]) {
+                    ans[u] = ans[t]+1;
+                    trace[u] = t;
+                }
+            }
+        }
+        if (ans.at(V-1) == 1) cout << "IMPOSSIBLE";
+        else{
+            cout << ans.at(V-1)<< '\n';
+            vector<int> t{V-1};
+            int x = V-1;
+            while (x!=1){
+                x = trace[x];
+                t.push_back(x);
+            }
+            reverse(t.begin(), t.end());
+            for (auto v: t) cout << v<< ' ';
+        }
+    }
+};
+ 
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    #ifdef DEBUG
+        freopen("inp.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
+    int N, M;
+    cin >> N >> M;
+    Graph g(N);
+    for (int i=0;i<M;i++){
+        int a, b;
+        cin >> a >> b;
+        g.addEdge(a, b);
+    }
+    g.solve();
+}
+*/
