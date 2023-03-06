@@ -125,7 +125,11 @@ int main(){
     g.solve();
 }
 /*
+<<<<<<< HEAD
 Code viết lại gọn hơn:
+=======
+Code với template mới
+>>>>>>> b10016ddefff0ddbc54f27753bbb13ad7f5e6b01
 #include<bits/stdc++.h>
  
 typedef long long ll;
