@@ -1,14 +1,12 @@
-// https://cses.fi/problemset/result/5677583/
-
 // https://cses.fi/problemset/task/1734
 #include<bits/stdc++.h>
-
+ 
 typedef long long ll;
 const ll mod = 1e9 + 7;
 #define ld long double
-
+ 
 using namespace std;
-
+ 
 #ifdef DEBUG
 #include "debug.cpp"
 #else
@@ -16,8 +14,37 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-const ll blockSize = 450;
+template<typename T>
+struct Compress {
+    vector<T> rcv; // recover - giá trị mảng ban đầu đã sort và xóa unique
+    vector<T> cpr; // compressed - giá trị đã nén của mảng a
+    Compress() {}
+    Compress(vector<T> v) { build(v);}
+    void build(vector<T> v) {
+        rcv = v;
+        sort(rcv.begin(), rcv.end());
+        rcv.resize(unique(rcv.begin(), rcv.end()) - rcv.begin());
 
+        cpr = v;
+        for (int i = 0; i < (int) cpr.size(); ++i) {
+            cpr[i] = lower_bound(rcv.begin(), rcv.end(), cpr[i]) - rcv.begin(); // O(logN) thay cho map
+        }
+    }
+    T compressed_val(T originalVal) { // giá trị ban đầu sang giá trị đã compress
+        T i = lower_bound(rcv.begin(), rcv.end(), originalVal) - rcv.begin();
+        if (rcv[i] != originalVal) return -1;
+        return i;
+    }
+    T compressed_val_by_index(T index) {
+        return cpr[index];
+    }
+    ll recover(T compressedVal) {
+        return rcv[compressedVal];
+    }
+};
+
+const ll blockSize = 1000;
+ 
 struct Query {
     ll l, r, index;
     friend bool operator<(Query a, Query b) {
@@ -34,7 +61,7 @@ struct Ans {
     }
     friend std::ostream& operator<<(std::ostream& os, const Ans &s) { return os << destructure(s);}
 };
-
+ 
 struct Mo {
 private:
     vector<ll> a; // mảng đầu vào
@@ -43,31 +70,22 @@ public:
     vector<ll> data; // lưu trạng thái hiện tại - lưu tần số của từng số có trong range [left, right] hiện tại
     vector<Ans> ans; // index, val
     ll cur_result = 0; // giá trị hiện tại, đối với những bài giá trị tuyến tính khi add, remove thì dùng, ko thì tính trực tiếp từ mảng data
+    Compress<ll> c;
     Mo(vector<ll> a, vector<Query> queries) {
         this->a = a;
-        data.resize(200005, 0);
+        data.resize(a.size(), 0);
         this->queries = queries;
-        this->compress();
-    }
-    unordered_map<ll, ll> compressed; // value to new index
-    void compress() {
-        ll cur = 0;
-        for (auto v: a) {
-            if (compressed.find(v) == compressed.end()) {
-                compressed[v] = cur; cur++;
-            }
-        }
-        for (auto &v: a) {
-            v = compressed[v];
-        }
+        c.build(a);
     }
     void add(ll index) {
-        if (data[a[index]] == 0) cur_result++;
-        data[a[index]]++;
+        ll val = c.compressed_val_by_index(index);
+        if (data[val] == 0) cur_result++;
+        data[val]++;
     }
     void remove(ll index) {
-        if (data[a[index]] == 1) cur_result--;
-        data[a[index]]--;
+        ll val = c.compressed_val_by_index(index);
+        if (data[val] == 1) cur_result--;
+        data[val]--;
     }
     ll getResult() {
         return this->cur_result;
@@ -90,7 +108,7 @@ Mo mo(a, queries);
 mo.solve();
 for (auto v: mo.ans) cout << v << ' ';
 */
-
+ 
 int main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
@@ -117,9 +135,4 @@ int main(){
 }
 /*
 Dùng Mo's algorithm nhưng đoạn kia nhất thiết không được dùng map để xử lý, map -> vector + compress
-Compress - ko dùng thông qua map nữa mà chuyển thẳng về vector.
-a        = [1, 3, 4, 10, 2]
-compress = [0, 1, 2, 3 , 4]
-Khi này dựa vào index, a[index] là giá trị ban đầu, compress[index] là giá trị mới
-compress(a[index]) = new_index cực kỳ chậm chạp
 */
