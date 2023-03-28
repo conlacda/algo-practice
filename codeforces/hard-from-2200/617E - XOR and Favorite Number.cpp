@@ -1,3 +1,5 @@
+// https://codeforces.com/contest/617/problem/E
+// Key: a^b luôn tạo ra số có số chữ số bằng a, b-> int^int->int, tại đây constraint là 10^6 nên cnt là vector sẽ chạy ổn hơn là unordered_map (xem lịch sử submission trên codeforces) từ 0.5s -> 2.9s khi từ vector sang map/unodered_map
 #include<bits/stdc++.h>
 
 typedef long long ll;
