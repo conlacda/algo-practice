@@ -1,5 +1,4 @@
 // https://codeforces.com/contest/1806/problem/E
-// https://codeforces.com/contest/1806/my
 #include<bits/stdc++.h>
 
 typedef long long ll;
@@ -136,7 +135,7 @@ public:
         vis.at(edge) = !vis.at(edge); // nếu 1 đỉnh visit 1 lần thì nó nằm trong khoảng, 2 lần là nằm ngoài khoảng
         ll dep = depth.at(edge);
         if (!vis[edge]) remove(edge);
-        (*depthVal)[dep] = weight[edge];
+        (*depthVal)[dep] = weight[edge]; // depth trái hay phải
         if (vis[edge]) add(edge);
     }
     void add(ll edge) {
@@ -153,9 +152,8 @@ public:
     }
     void solve() {
         sort(queries.begin(), queries.end());
-        ll cur_l = 0, cur_r = -1; depth_left[0] = weight[0];
+        ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
-            // Chỉ thêm sửa giá trị khi layer đó xuất hiện 2 lần
             while (cur_l > query.l) resolve(--cur_l, &depth_left);
             while (cur_r < query.r) resolve(++cur_r, &depth_right);
             while (cur_l < query.l) resolve(cur_l++, &depth_left);
@@ -209,4 +207,5 @@ Hiện tại l, r đang có dep = 3. Khi này l sẽ dịch dần trên eulertou
 l dịch tới dep=4, dep=5, touch_times[dep=4,5]++ -> 1. khi này không thay đổi giá trị gì cả
 r dịch tới dep=4, dep=5, touch_times[dep=4,5]++ -> 2. Khi này giá trị sẽ được cộng depth_left[4] * depth_right[4], depth_left[4] * depth_right[4] 
 Bài này thuộc dạng 2 nên không cần add rồi remove lca.lca(l, r) mà chỉ cần thêm giá trị lúc in ra là xong
+
 */
