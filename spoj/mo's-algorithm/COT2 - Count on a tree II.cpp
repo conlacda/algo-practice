@@ -123,14 +123,15 @@ public:
     }
     void remove(ll index) {
         ll edge = eulertour[index];        
-        if (data[weight[edge]] == 1) cur_result--;
         data[weight[edge]]--;
-
+        if (data[weight[edge]] == 0) cur_result--;
     }
     void resolve(ll index) {
         ll edge = eulertour[index];
         vis[edge] = !vis[edge]; // vis 1 lần thì nó nằm trên đoạn, 2 lần thì nó nằm ngoài đoạn
-        if (!vis[edge]) remove(index); else add(index);
+        if (!vis[edge]) remove(index);
+
+        if (vis[edge]) add(index);
     }
     void solve(vector<Query> qrs) {
         queries = fromEdgeToEuler(qrs);
