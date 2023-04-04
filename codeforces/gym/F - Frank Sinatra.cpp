@@ -17,54 +17,56 @@ using namespace std;
 
 template <typename T>
 struct FenwickTree {
-    vector<T> bit;
+private:
+    vector<T> bit; // binary indexed tree
     T n;
-
-    FenwickTree(T n) {
-        this->n = n;
-        bit.assign(n, 0); // bit = vector<long long> (n, 0);
-    }
-
-    FenwickTree(vector<T> a) : FenwickTree(a.size()) {
-        for (size_t i = 0; i < (int) a.size(); i++)
-            add(i, a[i]);
-    }
+public:
     FenwickTree(){}
-    void build(vector<T> a) {
-        for (size_t i = 0; i < (int) a.size(); i++)
-            add(i, a[i]);
-    }
-    void build(T n) {
-        this->n = n;
-        bit.assign(n, 0); // bit = vector<long long> (n, 0);
-    }
-    T sum(int r) {
+    void build(T n) { this->n = n; bit.assign(n, 0); }
+    void build(vector<T> a) { build(a.size()); for (int i = 0; i < (int) a.size(); i++) add(i, a[i]); }
+    FenwickTree(vector<T> a) { build(a); }
+    T sum(T r) {
         if (r==-1) return 0;
         T ret = 0;
         for (; r >= 0; r = (r & (r + 1)) - 1) ret += bit[r];
         return ret;
     }
 
-    T sum(int l, int r) {
+    T sum(T l, T r) {
         assert(0 <= l && l <= r && r < n);
         return sum(r) - sum(l-1);
     }
 
-    void add(int idx, int delta) {
+    void add(T idx, T delta) {
         assert(0 <= idx && idx < n);
         for (; idx < n; idx = idx | (idx + 1)) bit[idx] += delta;
     }
-    void set(int idx, int val) {
-        int diff = val - sum(idx, idx);
+    void set(T idx, T val) {
+        T diff = val - sum(idx, idx);
         add(idx, diff);
     }
 
     vector<T> original(){ // Return original value of input vector
         vector<T> a;
-        for (int i=0;i<this->n;i++) a.push_back(sum(i,i));
+        for (T i=0;i<this->n;i++) a.push_back(sum(i,i));
         return a;
     }
 };
+
+template<typename T>
+vector<T> depth_on_tree(vector<vector<T>> tree) {
+    vector<T> depth((ll) tree.size(), 0);
+    std::function<void(T, T)> dfs = [&](T u, T p){
+        for (auto v: tree.at(u)) {
+            if (v!= p) {
+                depth.at(v) = depth.at(u) + 1;
+                dfs(v, u);
+            }
+        }
+    };
+    dfs(0, 0);
+    return depth;
+}
 
 const ll blockSize = 500; // 300, 700
 
@@ -219,21 +221,6 @@ MoOnTree mo(graph, weight_on_node);
 mo.solve(vector<Query> queries);
 Các hàm cần thay đổi để fit với từng bài: resolve(), add(), remove() và đoạn xét lca(u, v)
 */
-
-template<typename T>
-vector<T> depth_on_tree(vector<vector<T>> tree) {
-    vector<T> depth((ll) tree.size(), 0);
-    std::function<void(T, T)> dfs = [&](T u, T p){
-        for (auto v: tree.at(u)) {
-            if (v!= p) {
-                depth.at(v) = depth.at(u) + 1;
-                dfs(v, u);
-            }
-        }
-    };
-    dfs(0, 0);
-    return depth;
-}
 
 int main(){
     ios::sync_with_stdio(0); cin.tie(0);
