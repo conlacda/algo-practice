@@ -1,0 +1,140 @@
+// https://acm.timus.ru/problem.aspx?space=1&num=1423
+#include<bits/stdc++.h>
+
+typedef long long ll;
+const ll mod = 1e9 + 7;
+#define ld long double
+
+using namespace std;
+
+#ifdef DEBUG
+#include "debug.cpp"
+#else
+#define dbg(...)
+#define show_exec_time()
+#define destructure(a) #a
+#endif
+
+// Full doc: https://github.com/conlacda/algo-learning/blob/master/string/cp-algorithm/hash-full.md
+template<class itable> // chỉ chạy với 64bit.
+class Hash{
+private:
+    vector<ll> pc; // pre-compute 
+    ll factor = 263; // **
+    vector<ll> inv;
+    char mc = 0x00; // **
+    ll n;
+    int toInt(char x) { // char(127) = 127 nhưng char(128) = -127, ... char(255) = -1 
+        int res = x - mc + 1;
+        return (res <= 0) ? res + 256 : res;
+    }
+public:
+    itable s;
+    vector<ll> prh, rph;
+    ll miv(ll a) { ll x, y;auto egcd = [&] (ll a, ll b) -> ll { x = 1; y =0; ll x1 = 0, y1 = 1, a1 = a, b1 = b; while (b1) {ll q = a1 / b1;tie(x, x1) = make_tuple(x1, x - q * x1);tie(y, y1) = make_tuple(y1, y - q * y1);tie(a1, b1) = make_tuple(b1, a1 - q * b1);}return a1;};ll g = egcd(a, mod);if (g != 1) return -1;else x = (x%mod +mod) %mod;return x;}
+    void bl(ll length = 250000){ ll p = 1; for (ll i=0;i<length;i++){ pc.push_back(p); p = (p* factor) % mod;} for (auto v: pc) inv.push_back(miv(v));}
+    // lấy ra luôn 1 lúc hash ngược và hash xuôi
+    pair<ll, ll> hash(itable s){
+        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.bl()??");
+        std::function<ll(itable)> getHash = [&](itable s){
+            ll hvl = 0;
+            for (int i=0;i< (int) s.size();i++) {
+                int v = toInt(s[i]); assert(v > 0 && "mc phải nhỏ hơn s[i]");
+                hvl = (hvl + 1LL*v*pc[i]) % mod;
+            }
+            if (hvl < 0) hvl += mod;
+            return hvl; 
+        };
+        return {getHash(s), getHash(string(s.rbegin(), s.rend()))};
+    }
+
+    void ltw(itable s) {
+        this->prh = {0};
+        ll hvl = 0;
+        for (int i=0;i<s.size();i++) {
+            int v = toInt(s[i]); assert(v > 0 && "mc phải nhỏ hơn s[i]");
+            hvl = (hvl + 1LL*v*pc[i]) %mod;
+            prh.push_back(hvl);
+        }
+    }
+    void lbw(itable s) {
+        this->rph = {0};
+        ll hvl = 0;
+        for (int i=(int) s.size() - 1;i>=0;i--) {
+            int v = toInt(s[i]); assert(v > 0 && "mc phải nhỏ hơn s[i]");
+            hvl = (hvl + 1LL*v*pc[(int) s.size()-1-i]) %mod;
+            rph.push_back(hvl);
+        }
+    }
+    void load(itable s) {
+        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.bl()??");
+        this->s = s; this->n = (ll) s.size();
+        ltw(s); lbw(s);
+    }
+    ll sstw(ll start, ll length){
+        assert(length <= n); // assert(start+length <= (ll) s.size()); nếu chỉ muốn range thông thường ko phải dạng rolling
+        ll ans = 0;
+        if (start + length <= n) {
+            ans = (prh[start + length] - prh[start] + mod) % mod;
+            return (ans * inv[start]) % mod;
+        }
+        ll start2ssize = (prh[n] - prh[start] + mod) % mod;
+        start2ssize = (start2ssize * inv[start]) % mod;
+        ll zero2end = prh[length + start - n];
+        ans = (start2ssize + zero2end * pc[n - start]) % mod;
+        if (ans < 0) ans += mod;
+        return ans;
+    }
+    ll ssbw(ll start, ll length){
+        assert(length <= n); // assert(start+length <= n); nếu chỉ muốn range thông thường ko phải dạng rolling
+        ll ans = 0;
+        start = n - 1 - start;
+        if (start + length <= n) {
+            ans = (rph[start + length] - rph[start] + mod) % mod;
+            return (ans * inv[start]) % mod;
+        }
+        ll start2ssize = (rph[n] - rph[start] + mod) % mod;
+        start2ssize = (start2ssize * inv[start]) % mod;
+        ll zero2end = rph[length + start - n];
+        ans = (start2ssize + zero2end * pc[n - start]) % mod;
+        if (ans < 0) ans += mod;
+        return ans;
+    }
+    // Lấy ra hash của s.substr(start, length)
+    pair<ll, ll> substr(ll start, ll length) {
+        ll end = (start + length >= n) ? (start + length - n -1) : (start+length-1);
+        return make_pair(sstw(start, length), ssbw(end, length));
+    }
+};
+struct IPH {
+    static_assert(sizeof(int) * 2 == sizeof(size_t));
+    size_t operator()(pair<ll, ll> p) const noexcept {
+        return size_t(p.first) << 32 | p.second;
+    }
+};
+
+int main(){
+    ios::sync_with_stdio(0); cin.tie(0);
+    #ifdef DEBUG
+        freopen("inp.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
+    // cout << std::fixed << setprecision(2);
+    int n; cin >> n;
+    string s1, s2;
+    cin >> s1 >> s2;
+    Hash<string> hash;
+    hash.bl(250000);
+    bool found = false;
+    pair<ll, ll> hv1 = hash.hash(s1);
+    hash.load(s2);
+    for (int i=0;i<n;i++) {
+        if (hash.substr(i, n) == hv1) {
+            cout << i;
+            found = true;
+            break;
+        }
+    }
+    if (!found) cout << -1;
+    show_exec_time();
+}
