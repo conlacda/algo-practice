@@ -1,5 +1,4 @@
 // https://acm.timus.ru/problem.aspx?space=1&num=1423
-// Do mình đang public substring mà ko muốn để lộ ra phần code này nên mình tạm thời để đây cho tới khi pv xong thì đưa nó vào algo-pratice
 #include<bits/stdc++.h>
 
 typedef long long ll;
