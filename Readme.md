@@ -6,7 +6,6 @@
 
 ## TODO 
 * Polynomial Queries: https://cses.fi/problemset/task/1736
-* https://www.spoj.com/problems/CHAIN/ - DSU
 
 ## Resources
 * [Open katis](https://open.kattis.com/)
