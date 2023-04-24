@@ -1,0 +1,38 @@
+// https://timus.online/problem.aspx?space=1&num=1706
+#include<bits/stdc++.h>
+
+typedef long long ll;
+const ll mod = 1e9 + 7;
+#define ld long double
+
+using namespace std;
+
+#ifdef DEBUG
+#include "debug.cpp"
+#else
+#define dbg(...)
+#define show_exec_time()
+#define destructure(a) #a
+#endif
+<SuffixArray>
+int main(){
+    ios::sync_with_stdio(0); cin.tie(0);
+    #ifdef DEBUG
+        freopen("inp.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
+    int k; cin >> k;
+    string s;
+    cin >> s;
+    int n = s.size();
+    s = s+s;
+    for (int i=0;i<n;i++) {
+        SuffixArray suf(s.substr(i, k));
+        cout << suf.number_of_substr() << ' ';
+    }
+}
+// Bài này dễ hơn mình tưởng tượng, ban đầu mình dựng 1 suffix array chung cho toàn bộ string s+s
+// Sau đó từ 1 substring độ dài k mình tìm vị trí của nó trên suffix_array
+// Rồi tương tự như number_of_substr() mình query độ dài chung của các prefix_substring cạnh nhau rồi tính toán
+// Làm như thế cũng được nhưng nó có lắm lỗi vặt
+// với k nhỏ, dựng liên tiếp các suffix_array cho string con đó rồi in thẳng ra number_of_substr() là xong
