@@ -4,6 +4,7 @@
 typedef long long ll;
 const ll mod = 1e9 + 7;
 #define ld long double
+#define i64 long long
 
 using namespace std;
 
@@ -15,18 +16,17 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-
 <HLD with>
     static H merge(H a, H b){
         return a + b;
     }
     static const H null_val = 0;
     static const bool weight_on_edge = true;
-
+ 
 void solve(){
     int N;
     cin >> N;
-    vector<vector<int>> adj(N);
+    vector<vector<ll>> adj(N);
     vector<vector<pair<int,ll>>> adj_w(N);
     for (int i=0;i<N-1;i++){
         int u, v, w;
@@ -37,16 +37,8 @@ void solve(){
         adj_w[u].push_back({v, w});
         adj_w[v].push_back({u, w});
     }
-    HeavyLightDecomposition<int> hld(adj);
-    vector<int> weight(N, -1);
-    for (int i=0;i<adj_w.size();i++){
-        for (auto vw: adj_w[i]){
-            int v = vw.first, w = vw.second;
-            if (hld.depth[i] > hld.depth[v]) weight[i] = w;
-            else weight[v] = w;
-        }
-    }
-    hld.buildSegTree(weight);
+    HeavyLightDecomposition<ll> hld(adj);
+    hld.buildSegTree(adj_w);
     while (true){
         string s; 
         cin >>s;
