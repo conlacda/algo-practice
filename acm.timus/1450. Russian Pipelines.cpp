@@ -20,43 +20,48 @@ using namespace std;
 struct Edge {
     int from, to, weight;
 };
+vector<int> bellmanFord(vector<vector<pair<int, int>>> adj, int source) {
+    int n = (int) adj.size();
+    // Lấy ra danh sách các cạnh
+    vector<Edge> edges;
+    for (int i=0;i<n;i++) {
+        for (auto vw: adj[i]) {
+            edges.push_back({i, vw.first, vw.second});
+        }
+    }
+    // Tính dist[]
+    vector<int> dist(n, -INF); dist[source] = 0;
+    for (int _=0;_<n;_++) {
+        // Phần core tương tự như dijkstra
+        for (auto edge: edges) {
+            if (dist[edge.from] == -INF) continue;
+            if (dist[edge.from] + edge.weight > dist[edge.to]) {
+                dist[edge.to] = dist[edge.from] + edge.weight;
+            }
+        }
+    }
+    return dist;
+}
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
         freopen("out.txt", "w", stdout);
     #endif
-    // cout << std::fixed << setprecision(2);
     int n, q;
     cin >> n >> q;
     vector<vector<pair<int,int>>> adj(n);
-    vector<Edge> edges;
     for (int i=0;i<q;i++) {
         int u, v, w;
         cin >> u >> v >> w;
         u--;v--;
         adj[u].push_back({v, w});
-        edges.push_back(Edge{u, v, w});
     }
     int source, sink;
     cin >> source >> sink;
     source--; sink--;
-    std::function<vector<int>(int source)> bellmanford = [&](int source){
-        vector<int> dist(n, -INF); dist[source] = 0;
-        for (int _=0;_<n-1;_++) {
-            for (auto edge: edges) {
-                if (dist[edge.from] == -INF) continue;
-                if (dist[edge.from] + edge.weight > dist[edge.to]) {
-                    dist[edge.to] = dist[edge.from] + edge.weight;
-                }
-            }
-        }
-        return dist;
-    };
-    auto dist = bellmanford(source);
+    auto dist = bellmanFord(adj, source);
     if (dist[sink] == -INF) cout << "No solution";
     else  cout << dist[sink];
-    dbg(dist);
     show_exec_time();
 }
-// Using the Bellman-ford algorithm
