@@ -65,3 +65,7 @@ signed main(){
     else  cout << dist[sink];
     show_exec_time();
 }
+/*
+Bellman-ford truyền thống tính đường đi ngắn nhất.
+Tại đây sửa 1 chút phần core để tính đường đi dài nhất
+*/
