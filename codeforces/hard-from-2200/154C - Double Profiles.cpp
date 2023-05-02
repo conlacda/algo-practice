@@ -1,11 +1,9 @@
 // https://codeforces.com/contest/154/problem/C
 // https://codeforces.com/contest/154/my
-// https://codeforces.com/contest/154/problem/C
-// https://codeforces.com/contest/154/my
 #include<bits/stdc++.h>
 
 typedef long long ll;
-const ll mod = 1e9 + 7;
+const int mod = 1e9 + 7;
 #define ld long double
 
 using namespace std;
@@ -16,7 +14,8 @@ using namespace std;
 #define dbg(...)
 #endif
 
-<hash-string.snippet>
+<hash-string with int toInt(char x) -> int toInt(int x)>
+
 long long nCr(ll n, ll r) {
     if(r > n - r) r = n - r; // because C(n, r) == C(n, n - r)
     long long ans = 1;
@@ -67,14 +66,12 @@ class DSU {
 };
  
 struct Object{
-    ll v, hvalue, rhvalue;
+    ll v, hvalue;
     bool friend operator<(Object x, Object y){
-        if (x.hvalue == y.hvalue) return x.rhvalue < y.rhvalue;
         return x.hvalue < y.hvalue;
     }
     bool friend operator==(Object x, Object y){
-        if (x.hvalue == y.hvalue && x.rhvalue == y.rhvalue) return true;
-        return false;
+        return x.hvalue == y.hvalue;
     }
 };
 int main(){
@@ -110,12 +107,12 @@ int main(){
     vector<Object> s_with_itself, s_without_itself;
     for (ll i =0;i<n;i++){
         vector<ll> gi = g[i];
-        pair<ll, ll> ho = hash.hash(gi);
-        s_without_itself.push_back(Object{i, ho.first, ho.second});
+        auto ho = hash.getHash(gi);
+        s_without_itself.push_back(Object{i, ho});
         gi.push_back(i);
         sort(gi.begin(), gi.end());
-        ho = hash.hash(gi);
-        s_with_itself.push_back(Object{i, ho.first, ho.second});
+        ho = hash.getHash(gi);
+        s_with_itself.push_back(Object{i, ho});
     }
     DSU dsu(n);
     sort(s_with_itself.begin(), s_with_itself.end());
@@ -142,42 +139,3 @@ int main(){
     cout << ans;
     cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
-/*
-You have been offered a job in a company developing a large social network. Your first task is connected with searching profiles that most probably belong to the same user.
-
-The social network contains n registered profiles, numbered from 1 to n. Some pairs there are friends (the "friendship" relationship is mutual, that is, if i is friends with j, then j is also friends with i). Let's say that profiles i and j (i ≠ j) are doubles, if for any profile k (k ≠ i, k ≠ j) one of the two statements is true: either k is friends with i and j, or k isn't friends with either of them. Also, i and j can be friends or not be friends.
-
-Your task is to count the number of different unordered pairs (i, j), such that the profiles i and j are doubles. Note that the pairs are unordered, that is, pairs (a, b) and (b, a) are considered identical.
-
-Input
-The first line contains two space-separated integers n and m (1 ≤ n ≤ 106, 0 ≤ m ≤ 106), — the number of profiles and the number of pairs of friends, correspondingly.
-
-Next m lines contains descriptions of pairs of friends in the format "v u", where v and u (1 ≤ v, u ≤ n, v ≠ u) are numbers of profiles that are friends with each other. It is guaranteed that each unordered pair of friends occurs no more than once and no profile is friends with itself.
-
-Output
-Print the single integer — the number of unordered pairs of profiles that are doubles.
-
-Please do not use the %lld specificator to read or write 64-bit integers in С++. It is preferred to use the %I64d specificator.
-Examples
-input
-3 3
-1 2
-2 3
-1 3
-output
-3
-input
-3 0
-output
-3
-input
-4 1
-1 3
-output
-2
-Note
-In the first and second sample any two profiles are doubles.
-
-In the third sample the doubles are pairs of profiles (1, 3) and (2, 4).
-
-*/
