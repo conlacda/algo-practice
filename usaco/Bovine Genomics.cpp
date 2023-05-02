@@ -11,130 +11,7 @@ using namespace std;
 #define dbg(...)
 #endif
 
-// Full doc: https://github.com/conlacda/algo-learning/blob/master/string/cp-algorithm/hash-full.md
-template<class Iterable> // chỉ chạy với 64bit.
-class Hash{
-private:
-    vector<ll> pc; // pre-compute 
-    ll factor = 137; // **
-    vector<ll> inv;
-    Iterable s, rs;
-public:
-    vector<ll> prefix_hash, rprefix_hash;
-    char min_char = char(0); // **
-    // a*x ≡ 1 mod m -> find x - xem thêm tại math-compilation snippet
-    ll mod_inv(ll a) { ll x, y;auto extended_gcd = [&] (ll a, ll b) -> ll { x = 1; y =0; ll x1 = 0, y1 = 1, a1 = a, b1 = b; while (b1) {ll q = a1 / b1;tie(x, x1) = make_tuple(x1, x - q * x1);tie(y, y1) = make_tuple(y1, y - q * y1);tie(a1, b1) = make_tuple(b1, a1 - q * b1);}return a1;};ll g = extended_gcd(a, mod);if (g != 1) return -1;else x = (x%mod +mod) %mod;return x;}
-    void build(ll length = 200005){ ll p = 1; for (ll i=0;i<length;i++){ pc.push_back(p); p = (p* factor) % mod;} for (auto v: pc) inv.push_back(mod_inv(v));}
-    // lấy ra luôn 1 lúc hash ngược và hash xuôi
-    pair<ll, ll> hash(Iterable s){
-        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.build()??");
-        std::function<ll(Iterable)> hash_oneway_toward = [&](Iterable s){
-            ll hash_value = 0;
-            for (int i=0;i< (int) s.size();i++) {
-                int v = s[i] - min_char + 1; assert(v > 0 && "min_char phải nhỏ hơn s[i]");
-                hash_value = (hash_value + 1LL*v*pc[i]) % mod;
-            }
-            if (hash_value < 0) hash_value += mod;
-            return hash_value; 
-        };
-        ll hsh_toward = hash_oneway_toward(s);
-        reverse(s.begin(), s.end());
-        ll hsh_backward = hash_oneway_toward(s);
-        return {hsh_toward, hsh_backward};
-    }
-
-    // Precompute O(N) dạng prefix sum để sau tính hash từ l->r với O(1). 
-    void load_toward(Iterable s, bool reverse = false){
-        vector<ll> *ph;
-        Iterable *str;
-        if (!reverse) {
-            str = &(this->s);
-            ph = &prefix_hash;
-        } else {
-            str = &(this->rs);
-            ph = &rprefix_hash;
-        }
-        *str = s;
-        ph->resize(0);
-        ph->push_back(0);
-        ll hash_value = 0;
-        ll start = (!reverse) ? 0 : (ll) s.size() -1;
-        ll end = (!reverse) ? (ll) s.size() : -1;
-        ll increment = (!reverse) ? 1 : -1;
-        for (int i=start;i!=end;i+=increment) {
-            int v = str->at(i) - min_char + 1; assert(v > 0 && "min_char phải nhỏ hơn s[i]");
-            if (!reverse) hash_value = (hash_value + 1LL*v*pc[i]) %mod;
-            else hash_value = (hash_value + 1LL*v*pc[(int) s.size()-1-i]) %mod;
-            ph->push_back(hash_value);
-        }
-    }
-    void load_backward(Iterable s){ return load_toward(s, true);} // alias for load_toward(reverse=true);
-    void load(Iterable s) {
-        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.build()??");
-        load_toward(s); load_backward(s);
-    }
-    // hash dạng rolling substr- tức là nếu start+length> s.size() thì sẽ vòng lại lấy từ đầu đi tiếp
-    ll substr_toward(ll start, ll length){
-        assert(length <= (ll) s.size()); // assert(start+length <= (ll) s.size()); nếu chỉ muốn range thông thường ko phải dạng rolling
-        ll ans = 0;
-        if (start + length <= (ll) s.size()) {
-            ans = (prefix_hash[start + length] - prefix_hash[start] + mod) % mod;
-            return (ans * inv[start]) % mod;
-        }
-        ll start2ssize = (prefix_hash[s.size()] - prefix_hash[start] + mod) % mod;
-        start2ssize = (start2ssize * inv[start]) % mod;
-        ll zero2end = prefix_hash[length + start - (ll) s.size()];
-        ans = (start2ssize + zero2end * pc[(ll) s.size() - start]) % mod;
-        if (ans < 0) ans += mod;
-        return ans;
-    }
-    ll substr_backward(ll start, ll length){
-        assert(length <= (ll) rs.size()); // assert(start+length <= (ll) rs.size()); nếu chỉ muốn range thông thường ko phải dạng rolling
-        ll ans = 0;
-        start = (ll) rs.size() - 1 - start;
-        if (start + length <= (ll) rs.size()) {
-            ans = (rprefix_hash[start + length] - rprefix_hash[start] + mod) % mod;
-            return (ans * inv[start]) % mod;
-        }
-        ll start2ssize = (rprefix_hash[(ll) rs.size()] - rprefix_hash[start] + mod) % mod;
-        start2ssize = (start2ssize * inv[start]) % mod;
-        ll zero2end = rprefix_hash[length + start - (ll) rs.size()];
-        ans = (start2ssize + zero2end * pc[(ll) rs.size() - start]) % mod;
-        if (ans < 0) ans += mod;
-        return ans;
-    }
-    // Lấy ra hash của s.substr(start, length)
-    pair<ll, ll> substr(ll start, ll length) {
-        ll end = (start + length >= (ll) s.size()) ? (start + length - (ll) s.size() -1) : (start+length-1);
-        return make_pair(substr_toward(start, length), substr_backward(end, length));
-    }
-    // so sánh 2 substring. 1,0,-1 tương ứng lớn, bằng, nhỏ hơn (chưa kiểm duyệt)
-    ll compare_2substrs(ll st1, ll len1, ll st2, ll len2){ // s.substr(st1, len1) <=> s.substr(st1, len2)
-        ll size = min(len1, len2);
-        ll left = 0, right = size;
-        while (left < right - 1){
-            ll mid = (left + right) /2;
-            if (substr_toward(st1, st1 + mid) != substr_toward(st2, st2 + mid)){
-                right = mid-1;
-            } else left = mid;
-        }
-        while (left < size && s[st1 + left] == s[st2 + left]) left++;
-        if (left == size) {
-            if (len1 > len2) return 1;
-            else if (len1 < len2) return -1;
-            else return 0;
-        }
-        if (s[st1 + left] > s[st2 + left]) return 1;
-        else if (s[st1 + left] < s[st2 + left]) return -1;
-        return 0;
-    }
-};
-struct IntPairHash {
-    static_assert(sizeof(int) * 2 == sizeof(size_t));
-    size_t operator()(pair<ll, ll> p) const noexcept {
-        return size_t(p.first) << 32 | p.second; // <<32 chỉ chạy với 64 bit.
-    }
-};
+<hash-string-without-changes>
 
 int main(){
     ios::sync_with_stdio(0);
@@ -172,7 +49,7 @@ Tại mỗi index tính xem giá trị tối thiểu tại đó là bao nhiêu
     hnospot.load(nospot_string);
     std::function<bool(int, int)> check = [&](int index, int len){
         // Kiểm tra xem index và len này có được không
-        unordered_map<pair<ll, ll>, bool, IntPairHash> um;        
+        unordered_map<ll, bool> um;        
         // Kiểm tra xem đoạn này có được không
         /*Dùng binary search để xem 
         Nếu index to được thì giảm đi 1 nửa*/
