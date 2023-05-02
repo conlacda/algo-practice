@@ -52,7 +52,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-<hash>
+<hash-string without any changes>
 
 int main(){
     ios::sync_with_stdio(0);
@@ -86,7 +86,5 @@ int main(){
         }
         i++;
     }
-    dbg(hashed);
     cout << hashed.size();
-    cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
