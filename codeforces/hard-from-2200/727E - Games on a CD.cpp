@@ -1,4 +1,4 @@
-// https://codeforces.com/contest/727/submission/195569516
+// https://codeforces.com/contest/727/my
 // https://codeforces.com/contest/727/problem/E
 #include <bits/stdc++.h>
 
@@ -14,7 +14,7 @@ using namespace std;
 #define dbg(...)
 #endif
 
-<hash-string.snippet>
+<hash-string without changing any things>
 
 int main() {
     ios::sync_with_stdio(0);
@@ -33,14 +33,13 @@ int main() {
     Hash<string> hash;
     hash.build(s.size() + 5);
     hash.load(s);
-    unordered_map<pair<ll, ll>, ll, IntPairHash> m; // hash value to index
+    unordered_map<ll, ll> m; // hash value to index
 
     for (ll i = 0; i < q; i++) {
         string sub;
         cin >> sub;
-        m[hash.hash(sub)] = i + 1;
+        m[hash.getHash(sub)] = i + 1;
     }
-    dbg(m);
     for (ll i = 0; i < k; i++) {
         ll end = (i + k >= n) ? (i + k - n - 1) : (i + k - 1);
         if (m.find(hash.substr(i, k)) == m.end()) {
@@ -73,8 +72,6 @@ int main() {
         }
     }
     cout << "NO\n";
-
-    cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
 /*
 Several years ago Tolya had n computer games and at some point of time he decided to burn them to CD. After that he wrote down the names of the games one after another in a circle on the CD in clockwise order. The names were distinct, the length of each name was equal to k. The names didn't overlap.
