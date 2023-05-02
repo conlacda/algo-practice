@@ -15,8 +15,26 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-<suffix_array>
-<hash_string>
+<hash-string>
+
+struct SuffixArray{
+private:
+    const char min_char = 0x00; // kí tự 0 - gốc là $
+    const int alphabet = 256;
+    vector<int> cal_suffix_array(string s){
+        int n = s.size(); vector<int> p(n), c(n), cnt(max(alphabet, n), 0); for (int i = 0; i < n; i++) cnt[s[i]]++; for (int i = 1; i < alphabet; i++) cnt[i] += cnt[i-1]; for (int i = 0; i < n; i++) p[--cnt[s[i]]] = i; c[p[0]] = 0; int classes = 1; for (int i = 1; i < n; i++) { if (s[p[i]] != s[p[i-1]]) classes++; c[p[i]] = classes - 1;} vector<int> pn(n), cn(n); for (int h = 0; (1 << h) < n; ++h) { for (int i = 0; i < n; i++) { pn[i] = p[i] - (1 << h); if (pn[i] < 0) pn[i] += n;} fill(cnt.begin(), cnt.begin() + classes, 0); for (int i = 0; i < n; i++) cnt[c[pn[i]]]++; for (int i = 1; i < classes; i++) cnt[i] += cnt[i-1]; for (int i = n-1; i >= 0; i--) p[--cnt[c[pn[i]]]] = pn[i]; cn[p[0]] = 0; classes = 1; for (int i = 1; i < n; i++) { pair<int, int> cur = {c[p[i]], c[(p[i] + (1 << h)) % n]}; pair<int, int> prev = {c[p[i-1]], c[(p[i-1] + (1 << h)) % n]}; if (cur != prev) classes++; cn[p[i]] = classes - 1; } c.swap(cn);}
+        // p.erase(max_element(p.begin(), p.end())); // dấu $ - cũng là phần tử có index lớn nhất trong suffix_array (6* trong ví dụ dưới)
+        return p;
+    }
+public:
+    string s; int n;
+    vector<int> suffix_array;
+    SuffixArray(string s){
+        this->s = s; n = s.size();
+        suffix_array = cal_suffix_array(s);
+    }
+};
+// Doc: http://localhost:3000/docs/competitive-programming/string/suffix-array
 int main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
@@ -38,16 +56,4 @@ int main(){
         ans += hash.common_prefix(suf.suffix_array[i], suf.suffix_array[i+1]);
     }
     cout << double(ans) / (n-1);
-    // dbg(suf.common_prefix_of_substrs(0, 2));
 }
-/*
-lcp tại hàm ban đầu với index = n-2 thì tối đa nó cũng chỉ tới biên n tức là
-lcp tại string đó với string bên cạnh tối đa chỉ là 2.
-Việc sửa hàm đó rất khó khăn -> dùng SuffixArray với đầu vào là s+s. Khi này mọi điểm trên string s ban đầu đều có đoạn nối dài thêm ở s thứ 2
-Sử dụng hàm common_prefix_of_substrs để lấy ra độ dài chung tại 2 điểm start của s, nếu nó dài hơn n thì sẽ là n.
-=> Kết quả ko sai nhưng bị MLE - do string dài 500.000 (250.000 * 2) -> reduce memory của SuffixArray ban đầu??
-OR
-chuyển qua cách dùng hash để so sánh 2 string cạnh nhau
-hash.load(string s);
-Với 2 string bên cạnh tìm common_prefix - mất O(logN) cho 1 cặp
-*/
