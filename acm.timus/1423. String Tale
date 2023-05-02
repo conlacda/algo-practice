@@ -15,7 +15,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-<hash-string template>
+<hash-without-changes>
 
 int main(){
     ios::sync_with_stdio(0); cin.tie(0);
@@ -30,7 +30,7 @@ int main(){
     Hash<string> hash;
     hash.build(250000);
     bool found = false;
-    pair<ll, ll> hv1 = hash.getHash(s1);
+    ll hv1 = hash.getHash(s1);
     hash.load(s2);
     for (int i=0;i<n;i++) {
         if (hash.substr(i, n) == hv1) {
