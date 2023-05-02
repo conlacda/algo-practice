@@ -15,7 +15,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-<hash-string>
+<hash-string-without-changes>
 
 struct SuffixArray{
 private:
