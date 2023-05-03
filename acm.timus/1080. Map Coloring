@@ -1,0 +1,66 @@
+// https://timus.online/problem.aspx?space=1&num=1080
+#include<bits/stdc++.h>
+
+typedef long long ll;
+const ll mod = 1e9 + 7;
+#define ld long double
+#define int long long
+const int INF = std::numeric_limits<int>::max();
+
+using namespace std;
+
+#ifdef DEBUG
+#include "debug.cpp"
+#else
+#define dbg(...)
+#define show_exec_time()
+#define destructure(a) #a
+#endif
+
+signed main(){
+    ios::sync_with_stdio(0); cin.tie(0);
+    #ifdef DEBUG
+        freopen("inp.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n);
+    for (int i=0;i<n;i++) {
+        int k = -1;
+        while (true) {
+            cin >> k;
+            if (k == 0) break;
+            adj[i].push_back(k-1);
+            adj[k-1].push_back(i);
+        }
+    }
+    dbg(adj);
+    /*
+    0 - bắt đầu. Đánh dấu các node bằng 0,1 sao cho 2 node cạnh nhau không có chung
+    Nếu không thì in ra -1
+    */
+    vector<bool> vis(n, false);
+    vector<int> color(n, -1);
+    bool able = true;
+    std::function<void(int, int)> dfs = [&](int u, int c){
+        color[u] = c;
+        vis[u] = true;
+        for (auto v: adj[u]) {
+            if (!vis[v]) {
+                dfs(v, 1-c);
+            } else {
+                if (color[u] == color[v]) able = false;
+            }
+        }
+    };
+    for (int i=0;i<n;i++) {
+        if (!vis[i]) dfs(i, 0);
+    }
+    if (!able) {
+        cout << -1;
+    } else {
+        for (int i=0;i<n;i++) cout << color[i];
+    }
+    show_exec_time();
+}
