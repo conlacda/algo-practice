@@ -1,5 +1,4 @@
 // https://codeforces.com/problemset/problem/86/D
-// Submission: https://codeforces.com/contest/86/submission/197885160
 #include<bits/stdc++.h>
 
 typedef long long ll;
@@ -15,41 +14,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-template<typename T>
-struct Compress {
-    vector<T> rcv; // recover - giá trị mảng ban đầu đã sort và xóa unique
-    vector<T> cpr; // compressed - giá trị đã nén của mảng a
-    Compress() {}
-    Compress(vector<T> v) { build(v);}
-    void build(vector<T> v) {
-        rcv = v;
-        sort(rcv.begin(), rcv.end());
-        rcv.resize(unique(rcv.begin(), rcv.end()) - rcv.begin());
-
-        cpr = v;
-        for (int i = 0; i < (int) cpr.size(); ++i) {
-            cpr[i] = lower_bound(rcv.begin(), rcv.end(), cpr[i]) - rcv.begin(); // O(logN) thay cho map
-        }
-    }
-    T compressed_val(T originalVal) { // giá trị ban đầu sang giá trị đã compress
-        T i = lower_bound(rcv.begin(), rcv.end(), originalVal) - rcv.begin();
-        if (rcv[i] != originalVal) return -1;
-        return i;
-    }
-    T compressed_val_by_index(T index) {
-        return cpr[index];
-    }
-    ll recover(T compressedVal) {
-        return rcv[compressedVal];
-    }
-};
-/*
-vector<T> a{0, 20, 10};
-Compress<ll> c; c.build(a); // Compress<ll> c(a);
-c.compressed_val(20); // O(logN)
-c.recover(0); // O(1)
-c.compressed_val_by_index(1); // a{0, 20, 10} -> {0, 2, 1}.  compressed_val_by_index(index=1) => 2
-*/
+<coordinate compress>
 
 // Temporary version
 const ll blockSize = 500; // 300, 700
@@ -116,11 +81,6 @@ public:
         sort(ans.begin(), ans.end());
     }
 };
-/*
-Mo mo(a, queries);
-mo.solve();
-for (auto v: mo.ans) cout << v << ' ';
-*/
 
 int main(){
     ios::sync_with_stdio(0); cin.tie(0);
