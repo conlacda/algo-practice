@@ -32,7 +32,7 @@ signed main(){
     for (int i=0;i<n;i++) cin >> a[i];
     vector<int> ans(k+1, 0);
     // Khởi tạo dp
-    for (auto v: a) if (v < k) ans[v] = 1;
+    for (auto v: a) if (v <= k) ans[v] = 1;
     // Tính dp
     for (int i=0;i<=k;i++) {
         for (auto coin: a) {
