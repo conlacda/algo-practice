@@ -1,98 +1,97 @@
-//https://atcoder.jp/contests/practice2/tasks/practice2_g
 #include<bits/stdc++.h>
 
-using namespace std;
 typedef long long ll;
+const ll mod = 1e9 + 7;
+#define ld long double
 
-class DirectedGraph{
-public:
-    int V;
-    vector<vector<int>> G, G_re;
-    vector<bool> visited, visited_re;
-    DirectedGraph(int V){
-        for (int i=0;i<=V;i++){
-            G.push_back({});
-            G_re.push_back({});
-            this->visited.push_back(false);
-            this->visited_re.push_back(false);
-        }
-        this->V = V;
-    }
-    void addEdge(int a, int b){
-        G[a].push_back(b);
-        G_re[b].push_back(a);
-    }
-    void show(){
-        cout << G.size() << " verticies\n";
-        for (int i=0;i<=V;i++){
-            cout << i << "->";
-            for (auto v: G_re[i]){
-                cout << v << ' ';
+using namespace std;
+
+#ifdef DEBUG
+#include "debug.cpp"
+#else
+#define dbg(...)
+#define destructure(a) #a
+#endif
+
+
+// Full doc: https://github.com/conlacda/docc/blob/dev/docs/competitive-programming/graph/basic/toposort.md
+vector<vector<int>> findSCC(vector<vector<int>> G){
+    // Tạo ra reversed graph
+    std::function<vector<vector<int>>(vector<vector<int>>)> getReversedGraph = [&](vector<vector<int>> G){
+        vector<vector<int>> rG((int) G.size());
+        for (int i=0;i<G.size();i++){
+            for (auto v: G[i]){
+                rG[v].push_back(i);
             }
-            cout << '\n';
         }
-    }
-    // SCC function
-    vector<int> post_re, post, buff;
-    vector<vector<int>> scc;
-    void explore_re(int start){
-        if (!visited_re[start]){
-            visited_re[start] = true;
-            for (auto v: G_re[start]){
-                if (!visited_re[v]) explore_re(v);
+        return rG;
+    };
+    // Topo order
+    std::function<vector<int>(vector<vector<int>>)> toposort = [&](vector<vector<int>>G){
+        vector<bool> vis(G.size(), false);
+        vector<int> order;
+        std::function<void(int)> dfs = [&](int u){
+            if (!vis[u]) {
+                vis[u] = true;
+                for (auto v: G[u]){
+                    if (!vis[v]) dfs(v);
+                }
+                order.push_back(u);
             }
-            post_re.push_back(start);
+        };
+        for (int i=0;i<(int) G.size();i++) {
+            dfs(i);
         }
-    }
-    void dfs_re(){
-        for (int i=0;i<V;i++){
-            explore_re(i);
-        }
-    }
-    void explore(int start){
-        if (!visited[start]){
-            visited[start] = true;
-            for (auto v: G[start]){
-                if (!visited[v]) explore(v);
+
+        reverse(order.begin(), order.end());
+        return order;
+    };
+
+    vector<int> post_orders_reversed_graph = toposort(getReversedGraph(G)); // topo sort on reversed graph
+    vector<vector<int>> result;
+    std::vector<bool> vis((int) G.size(), false);
+    vector<int> scc;
+    std::function<void(int)> dfs = [&](int u){
+        vis[u] = true;
+        for (auto v: G[u]){
+            if (!vis[v]){
+                dfs(v);
             }
-            buff.push_back(start);
+        }
+        scc.push_back(u);
+    };
+    for (auto i: post_orders_reversed_graph){
+        if (!vis[i]) dfs(i);
+        if (scc.size() > 0){
+            result.push_back(scc);
+            scc = {};
         }
     }
-    void dfs(){
-        for (auto v: post){
-            if (!visited[v]) explore(v);
-            if (buff.size()>0) scc.push_back(buff);
-            buff.clear();
-        }
-    }
-    void findSCC(){
-        dfs_re();
-        reverse(post_re.begin(), post_re.end());
-        post= post_re;
-        dfs();
-        cout << scc.size() << '\n';
-        for (int i=scc.size()-1;i>=0;i--){
-            if (scc[i].size() > 0) cout << scc[i].size() << ' ';
-            for (auto v: scc[i]){
-                cout << v << ' ';
-            }
-            cout << '\n';
-        }
-    }
-};
+    reverse(result.begin(), result.end());
+    return result;
+}
 
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);
-    // freopen("inp.txt", "r", stdin);
-    // freopen("out.txt", "w", stdout);
-    int N,M;
-    cin >> N >> M;
-    DirectedGraph g(N);
-    for (int i=0;i<M;i++){
-        int a,b;
-        cin >> a >>b;
-        if (a!=b) g.addEdge(a,b);
+    #ifdef DEBUG
+        freopen("inp.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
+    int n, m;
+    cin >> n>> m;
+    vector<vector<int>> adj(n);
+    for (int i=0;i<m;i++){
+        int u, v;
+        cin >> u>>v;
+        adj[u].push_back(v);
     }
-    g.findSCC();
+    dbg(adj);
+    vector<vector<int>> sccs = findSCC(adj);
+    cout << sccs.size() <<'\n';
+    for (auto scc: sccs){
+        cout << scc.size()<< ' ';
+        for (auto v: scc) cout << v<< ' ';
+        cout << '\n';
+    }
 }
