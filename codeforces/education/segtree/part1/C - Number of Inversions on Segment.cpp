@@ -1,3 +1,4 @@
+// https://codeforces.com/edu/course/2/lesson/4/4/practice/contest/274684/problem/C
 #include<bits/stdc++.h>
 
 typedef long long ll;
