@@ -1,4 +1,5 @@
 // https://codeforces.com/edu/course/2/lesson/5/2/practice/contest/279653/problem/B
+// B. Multiplication and Sum
 #include<bits/stdc++.h>
 
 typedef long long ll;
@@ -20,16 +21,27 @@ using namespace std;
 #endif
 
 struct Lznode {
-    int factor = 1;
+    int factor = 0; // Node x; assert(x.apply(LzNode()) == x)
+    bool is_null = true;
+    // Apply 1 node lần thứ 2
     static Lznode composition(Lznode first, Lznode second) {
+        if (first.is_null) return second;
+        if (second.is_null) return first;
         return Lznode{
-            (first.factor * second.factor) % mod
+            (first.factor * second.factor) % mod,
+            false
+        };
+    }
+    static Lznode v(int factor) {
+        return Lznode {
+            factor,
+            false
         };
     }
 };
 
 struct Node {
-    int val = 1;
+    int val = 0;
     bool is_null = true;
     // Hàm merge: thể hiện việc merge 2 node từ dưới lên trên
     static Node merge(Node l, Node r) {
@@ -44,6 +56,7 @@ struct Node {
 
     // Apply cho 1 node to bự - hình dung nó là apply cho 1 range. Ví dụ fx = ax+b. Khi apply cho 1 range thì b sẽ được tính bằng sizeof(range)
     void apply(Lznode lz) {
+        if (lz.is_null) return;
         val = (val * lz.factor) % mod;
     }
     static Node v(int val) {
@@ -141,64 +154,6 @@ struct LazySegtree {
             if (((r >> i) << i) != r) update((r - 1) >> i);
         }
     }
-
-    template <bool (*g)(Node)> int max_right(int l) {
-        return max_right(l, [](Node x) { return g(x); });
-    }
-    template <class G> int max_right(int l, G g) {
-        assert(0 <= l && l <= N);
-        assert(g(Node()));
-        if (l == N) return N;
-        l += size;
-        for (int i = log; i >= 1; i--) push(l >> i);
-        Node sm = Node();
-        do {
-            while (l % 2 == 0) l >>= 1;
-            if (!g(Node::merge(sm, data[l]))) {
-                while (l < size) {
-                    push(l);
-                    l = (2 * l);
-                    if (g(Node::merge(sm, data[l]))) {
-                        sm = Node::merge(sm, data[l]);
-                        l++;
-                    }
-                }
-                return l - size;
-            }
-            sm = Node::merge(sm, data[l]);
-            l++;
-        } while ((l & -l) != l);
-        return N;
-    }
-
-    template <bool (*g)(Node)> int min_left(int r) {
-        return min_left(r, [](Node x) { return g(x); });
-    }
-    template <class G> int min_left(int r, G g) {
-        assert(0 <= r && r <= N);
-        assert(g(Node()));
-        if (r == 0) return 0;
-        r += size;
-        for (int i = log; i >= 1; i--) push((r - 1) >> i);
-        Node sm = Node();
-        do {
-            r--;
-            while (r > 1 && (r % 2)) r >>= 1;
-            if (!g(Node::merge(data[r], sm))) {
-                while (r < size) {
-                    push(r);
-                    r = (2 * r + 1);
-                    if (g(Node::merge(data[r], sm))) {
-                        sm = Node::merge(data[r], sm);
-                        r--;
-                    }
-                }
-                return r + 1 - size;
-            }
-            sm = Node::merge(data[r], sm);
-        } while ((r & -r) != r);
-        return 0;
-    }
 };
 // http://localhost:3000/docs/competitive-programming/range-queries/lazy-segment-tree
 
@@ -221,7 +176,7 @@ signed main(){
             int l, r, factor;
             cin >> l >> r >> factor;
             r--;
-            seg.update(l, r, Lznode{factor});
+            seg.update(l, r, Lznode::v(factor));
         } else {
             // query
             int l, r;
