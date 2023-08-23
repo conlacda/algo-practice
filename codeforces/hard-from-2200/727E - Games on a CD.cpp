@@ -1,4 +1,4 @@
-// https://codeforces.com/contest/727/my
+// https://codeforces.com/contest/727/submission/195569516
 // https://codeforces.com/contest/727/problem/E
 #include <bits/stdc++.h>
 
@@ -14,8 +14,77 @@ using namespace std;
 #define dbg(...)
 #endif
 
-<hash-string without changing any things>
-
+template<class Iterable> // chỉ chạy với 64bit.
+class Hash {
+private:
+    const ll factor = 263; // số nguyên tố lớn hơn 255 - là full bảng Acsii
+    const char min_char = 0x00; // kí tự 0
+    vector<ll> inv, pc; // pre-compute
+    ll n;
+    // a*x ≡ 1 mod m -> find x - xem thêm tại math-compilation snippet
+    ll mod_inv(ll a) { ll x, y;auto extended_gcd = [&] (ll a, ll b) -> ll { x = 1; y =0; ll x1 = 0, y1 = 1, a1 = a, b1 = b; while (b1) {ll q = a1 / b1;tie(x, x1) = make_tuple(x1, x - q * x1);tie(y, y1) = make_tuple(y1, y - q * y1);tie(a1, b1) = make_tuple(b1, a1 - q * b1);}return a1;};ll g = extended_gcd(a, mod);if (g != 1) return -1;else x = (x%mod +mod) %mod;return x;}
+    int toInt(char x) { // char(127) = 127 nhưng char(128) = -127, ... char(255) = -1 
+        int valOfChar = x - min_char + 1;
+        int res = (valOfChar <= 0) ? valOfChar + 256 : valOfChar;
+        assert(res > 0 && "min_char phải nhỏ hơn s[i]");
+        return res;
+    }
+    int toInt(int x) {
+        return x - min_char + 1;
+    }
+public:
+    Iterable s;
+    vector<ll> prefix_hash, suffix_hash;
+    void build(ll length = 250000){ ll p = 1; for (ll i=0;i<length;i++){ pc.push_back(p); p = (p* factor) % mod;} for (auto v: pc) inv.push_back(mod_inv(v));}
+    // lấy ra luôn 1 lúc hash ngược và hash xuôi
+    ll getHash(Iterable s){
+        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.build()??");
+        std::function<int(Iterable)> getHash1Way = [&](Iterable s){
+            ll hash_value = 0;
+            for (int i=0;i< (int) s.size();i++) 
+                hash_value = (hash_value + toInt(s[i]) * pc[i]) % mod;
+            if (hash_value < 0) hash_value += mod;
+            return hash_value; 
+        };
+        int hsh_fwd = getHash1Way(s);
+        reverse(s.begin(), s.end());
+        int hsh_bwd = getHash1Way(s);
+        return (ll) hsh_fwd << 32 | hsh_bwd;
+    }
+    // Precompute O(N) dạng prefix sum để sau tính hash từ l->r với O(1).     
+    void load(Iterable s) {
+        assert((int) pc.size() >= (int) s.size() && "quên chưa hash.build()??");
+        this->s = s; this->n = (ll) s.size();
+        prefix_hash = suffix_hash = {0};
+        ll pre = 0, suf = 0;
+        for (int i=0;i< (int) s.size();i++) {
+            pre = (pre + toInt(s[i]) * pc[i]) % mod;
+            suf = (suf + toInt(s[(int) s.size() - i - 1]) * pc[i]) % mod;
+            prefix_hash.push_back(pre);
+            suffix_hash.push_back(suf);
+        }
+    }
+    // Lấy ra hash của s.substr(start, length)
+    ll substr(ll start, ll length) {
+        assert(length <= n); // assert(start+length <= n); nếu chỉ muốn range thông thường ko phải dạng rolling
+        ll end = (start + length >= n) ? (start + length - n -1) : (start+length-1);
+        // hash dạng rolling substr- tức là nếu start+length> s.size() thì sẽ vòng lại lấy từ đầu đi tiếp
+        std::function<int(ll, ll, vector<ll>&)> hashOfSubstr = [&](ll start, ll length, vector<ll>& ps_hash){
+            ll ans = 0;
+            if (start + length <= n) {
+                ans = (ps_hash[start + length] - ps_hash[start] + mod) % mod;
+                return (ans * inv[start]) % mod;
+            }
+            ll start2ssize = (ps_hash[n] - ps_hash[start] + mod) % mod;
+            start2ssize = (start2ssize * inv[start]) % mod;
+            ll zero2end = ps_hash[length + start - n];
+            ans = (start2ssize + zero2end * pc[n - start]) % mod;
+            if (ans < 0) ans += mod;
+            return ans;
+        };
+        return (ll) hashOfSubstr(start, length, prefix_hash) << 32 | hashOfSubstr(n - 1 - end, length, suffix_hash);
+    }   
+};
 int main() {
     ios::sync_with_stdio(0);
     cin.tie(0);
@@ -40,8 +109,8 @@ int main() {
         cin >> sub;
         m[hash.getHash(sub)] = i + 1;
     }
+    dbg(m);
     for (ll i = 0; i < k; i++) {
-        ll end = (i + k >= n) ? (i + k - n - 1) : (i + k - 1);
         if (m.find(hash.substr(i, k)) == m.end()) {
             continue;
         }
@@ -51,7 +120,6 @@ int main() {
         if (start >= n)
             start -= n;
         while (start != i) {
-            ll end = (start + k >= n) ? (start + k - n - 1) : (start + k - 1);
             if (m.find(hash.substr(start, k)) != m.end()) {
                 check.push_back(m[hash.substr(start, k)]);
                 start += k;
