@@ -104,6 +104,15 @@ signed main(){
 /*
 Đọc chậm rãi
 Viết ra ý tưởng
-What is the pattern from simple input to output.
-8759037596
+What is the pattern from simple input to output?
+
+Bài này nó hỏi là cho các string dạng vòng của s, t. Sắp xếp nó lại rồi xem với mỗi index i thì s.substr(i, n) nhỏ hơn bao nhiêu số t.substr(j, n)
+Hỏi dạng vòng: -> S = s + s + t + t. Dạng vòng thì cứ build với s + s. 2 string thì s + s + t + t.
+Suffixarray sẽ sắp xếp các string lại với nhau.
+Mình chỉ xét tới các string nằm ở s thứ 1 và t thứ 1 tức là index nằm trong 2 khoảng 0->n-1 và 2n->3n-1
+Lấy mảng a chứa 2 khoảng đó. Sắp xếp mảng a theo điều kiện S.substr(i, n) > S.substr(j, n) thì đảo chỗ i, j.
+Mảng sau khi sắp xếp sẽ gồm các index mà i < j thì S.substr(i, n) < S.substr(j, n)
+Duyệt mảng rồi với mỗi i nằm trong khoảng của s thứ 1 thì cộng với số index thuộc khoảng t thứ 1 đằng sau nó là xong
+
+Thời gian chạy trên cái atcoder ko ổn định, nó yêu cầu 2s. Chương trình chạy từ 1.75->2.3s nên 1 source code submit nhiều lần lúc thì AC, lúc thì TLE
 */
