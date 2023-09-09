@@ -46,7 +46,7 @@ public:
         assert(k < n && "Out of range maxN");
         return is_prime[k];
     }
-    vector<int> primesList(int l, int r) {
+    vector<int> primesInRange(int l, int r) {
         int sz = r-l+1;
         vector<bool> ip(sz+1, true);
         for (int i=2;i*i<=r;i++) {
@@ -67,7 +67,7 @@ Prime p;
 void solve() {
     int l, r;
     cin >> l >> r;
-    for (auto v: p.primesList(l, r)) {
+    for (auto v: p.primesInRange(l, r)) {
         cout << v << '\n';
     }
     cout << '\n';
