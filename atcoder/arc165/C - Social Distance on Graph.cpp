@@ -87,7 +87,7 @@ signed main(){
             if (!vis[i]) paintColor(i, 0);
             if (!ableToPaint) return false;
         }
-        // Check đồ dài 2 đỉnh cùng màu
+        // Check độ dài 2 đỉnh cùng màu - tại 1 đỉnh sẽ có nhiều cạnh xung quanh, lấy ra 2 đỉnh có cạnh nhỏ nhất cộng vào nhau mà < x thì là ko thỏa mãn, ngược lại chứng tỏ 2 đỉnh nào bất kỳ nối với đỉnh đó cũng đều có độ dài >= x
         for (int i=0;i<n;i++) {
             if (gr[i].size() < 2) continue;
             int min1 = INF, min2 = INF;
