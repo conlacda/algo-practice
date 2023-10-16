@@ -1,4 +1,5 @@
 // https://codeforces.com/problemset/problem/1082/E
+// DP + Fenwick tree
 #include<bits/stdc++.h>
 
 typedef long long ll;
