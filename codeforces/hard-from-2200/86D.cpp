@@ -1,4 +1,3 @@
-// https://codeforces.com/problemset/problem/86/D
 #include<bits/stdc++.h>
 
 typedef long long ll;
@@ -14,7 +13,34 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-<coordinate compress>
+template<typename T = int>
+struct Compress {
+    vector<T> rcv; // recover - giá trị mảng ban đầu đã sort và xóa unique
+    vector<T> cpr; // compressed - giá trị đã nén của mảng a
+    Compress() {}
+    Compress(vector<T>& v) { build(v);}
+    void build(vector<T>& v) {
+        rcv = v;
+        sort(rcv.begin(), rcv.end());
+        rcv.resize(unique(rcv.begin(), rcv.end()) - rcv.begin());
+
+        cpr.resize(v.size());
+        for (int i = 0; i < (int) v.size(); i++) {
+            cpr[i] = lower_bound(rcv.begin(), rcv.end(), v[i]) - rcv.begin(); // O(logN) thay cho map
+        }
+    }
+    T compressed_val(T originalVal) { // giá trị ban đầu sang giá trị đã compress
+        T i = lower_bound(rcv.begin(), rcv.end(), originalVal) - rcv.begin();
+        if (rcv[i] != originalVal) return -1;
+        return i;
+    }
+    T operator[] (int index) {
+        return cpr[index];
+    }
+    T original_val(T compressedVal) {
+        return rcv[compressedVal];
+    }   
+};
 
 // Temporary version
 const ll blockSize = 500; // 300, 700
@@ -52,14 +78,14 @@ public:
         c.build(a);
     }
     void add(ll index) {
-        ll compressed_val = c.compressed_val_by_index(index);
+        ll compressed_val = c[index];
         ll frequence = data[compressed_val];
         cur_result -= frequence * frequence * a[index];
         data[compressed_val]++;
         cur_result += (frequence + 1) * (frequence + 1) * a[index];
     }
     void remove(ll index) {
-        ll compressed_val = c.compressed_val_by_index(index);
+        ll compressed_val = c[index];
         ll frequence = data[compressed_val];
         cur_result -= frequence * frequence * a[index];
         data[compressed_val]--;
