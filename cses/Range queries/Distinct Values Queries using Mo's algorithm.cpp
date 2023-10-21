@@ -14,13 +14,15 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-template<typename T>
+template<typename T = int>
 struct Compress {
     vector<T> rcv; // recover - giá trị mảng ban đầu đã sort và xóa unique
     vector<T> cpr; // compressed - giá trị đã nén của mảng a
+    vector<T> a;
     Compress() {}
     Compress(vector<T> v) { build(v);}
     void build(vector<T> v) {
+        this->a = v;
         rcv = v;
         sort(rcv.begin(), rcv.end());
         rcv.resize(unique(rcv.begin(), rcv.end()) - rcv.begin());
@@ -35,12 +37,12 @@ struct Compress {
         if (rcv[i] != originalVal) return -1;
         return i;
     }
-    T compressed_val_by_index(T index) {
+    T operator[] (int index) {
         return cpr[index];
     }
-    ll recover(T compressedVal) {
+    T original_val(T compressedVal) {
         return rcv[compressedVal];
-    }
+    }   
 };
 
 const ll blockSize = 1000;
@@ -78,12 +80,12 @@ public:
         c.build(a);
     }
     void add(ll index) {
-        ll val = c.compressed_val_by_index(index);
+        ll val = c[index];
         if (data[val] == 0) cur_result++;
         data[val]++;
     }
     void remove(ll index) {
-        ll val = c.compressed_val_by_index(index);
+        ll val = c[index];
         if (data[val] == 1) cur_result--;
         data[val]--;
     }
