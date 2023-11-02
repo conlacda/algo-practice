@@ -1,3 +1,4 @@
+// https://www.spoj.com/problems/PR003004/
 #include<bits/stdc++.h>
 
 #define int long long // __int128
