@@ -1,13 +1,15 @@
 // https://cses.fi/problemset/result/6240469/
 // Counting Numbers
+
 #include<bits/stdc++.h>
 
 typedef long long ll;
 using uint = unsigned int;
 using ull = unsigned long long;
-const ull mod = 1e9 + 7; // 998244353  1000000009  1000000007
+const ll mod = 1000000007; // 998244353  1000000009  1000000007 // đừng dùng ull
 #define ld long double
-#define int long long
+#define int long long // __int128
+const int INF = std::numeric_limits<int>::max(); // use INT32_MAX for i32
 
 using namespace std;
 
@@ -19,75 +21,159 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
+// digitDP[index][digit][constraint] constraint: 0/1/2/3 => ko/low/up/low&up constraint
+int digitDPSameDigit(string low, string up) {
+    assert(low.size() == up.size() && "Chia làm các khoảng có số chữ số bằng nhau");
+    int n = (int) up.size();
+    // Initial state
+    // dp[index][digit][constraint_0/1/2/3]
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(10, vector<int>(4, 0)));
+    vector<vector<vector<int>>> cnt(n, vector<vector<int>>(10, vector<int>(4, 0)));
+    if (up[0] == low[0]) {
+        dp[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
+        cnt[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
+    } else {
+        dp[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
+        cnt[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
+        for (int first_digit=low[0]-'0'+1;first_digit<=up[0]-'0'-1;first_digit++) {
+            dp[0][first_digit][0] = 1; // 2xxx
+            cnt[0][first_digit][0] = 1; // 2xxx
+        }
+        dp[0][up[0] - '0'][2] = 1; // 3xxx
+        cnt[0][up[0] - '0'][2] = 1; // 3xxx
+    }
+    /*
+    Không constraint => không constraint
+    Constraint trên => ko constraint
+                    => tiếp tục constraint
+    Constraint dưới => ko constraint
+                    => tiếp tục constraint
+    Constraint 2 chiều => ko constraint
+                       => constraint trên
+                       => constraint dưới
+                       => constraint 2 chiều
+    */
+    // Tính toán các chữ số đằng sau
+    for (int index=1;index<n;index++) {
+        for (int digit=0;digit<10;digit++) {
+            // Không constraint => không constraint
+            for (int p=0;p<10;p++) {
+                dp[index][digit][0] += dp[index-1][p][0];
+                if (p != digit)
+                    cnt[index][digit][0] += cnt[index-1][p][0];
+            }
+            // Constraint trên => ko constraint
+            if (digit < up[index] - '0') {
+                dp[index][digit][0] += dp[index-1][up[index-1] - '0'][2];
+                if (digit != up[index-1] - '0')
+                    cnt[index][digit][0] += cnt[index-1][up[index-1] - '0'][2];
+            }
+            // Constraint trên => tiếp tục constraint
+            if (digit == up[index] - '0') {
+                dp[index][digit][2] += dp[index-1][up[index-1] - '0'][2];
+                if (digit != up[index-1] - '0')
+                    cnt[index][digit][2] += cnt[index-1][up[index-1] - '0'][2];
+            }
+            // Constraint dưới => ko constraint
+            if (digit > low[index] - '0') {
+                dp[index][digit][0] += dp[index-1][low[index-1] - '0'][1];
+                if (digit != low[index-1] -'0')
+                   cnt[index][digit][0] += cnt[index-1][low[index-1] - '0'][1];
+            }
+            // Constraint dưới => constraint dưới tiếp
+            if (digit == low[index] - '0') {
+                dp[index][digit][1] += dp[index-1][low[index-1] - '0'][1];
+                if (digit != low[index-1] - '0')
+                    cnt[index][digit][1] += cnt[index-1][low[index-1] - '0'][1];
+            }
+            // Constraint 2 chiều => ko constraint
+            if (up[index-1] != low[index-1]) continue; // trước đó ko có constraint 2 chiều nữa
+            int prevdigit = up[index-1] - '0';
+            // Constraint 2 chiều hay constraint 1 chiều
+            if (up[index] == low[index]) {
+                // Constraint 2 chiều tiếp
+                if (digit == up[index] - '0') {
+                    dp[index][digit][3] += dp[index-1][prevdigit][3];
+                    if (digit != prevdigit)
+                        cnt[index][digit][3] += cnt[index-1][prevdigit][3];
+                }
+            } else {
+                // constraint dưới
+                if (digit == low[index] - '0') {
+                    dp[index][digit][1] += dp[index-1][prevdigit][3];
+                    if (digit != prevdigit)
+                        cnt[index][digit][1] += cnt[index-1][prevdigit][3];
+                }
+                // không constraint nữa
+                if (low[index] - '0' < digit && digit < up[index] - '0') {
+                    dp[index][digit][0] += dp[index-1][prevdigit][3];
+                    if (digit != prevdigit)
+                        cnt[index][digit][0] += cnt[index-1][prevdigit][3];
+                }
+                // constraint trên
+                if (digit == up[index] - '0') {
+                    dp[index][digit][2] += dp[index-1][prevdigit][3];
+                    if (digit != prevdigit)
+                        cnt[index][digit][2] += cnt[index-1][prevdigit][3];
+                }
+            }
+        }
+    }
+
+    // cout << ans; // cnt[n-1][0:9][0/1/2/3];
+    int ans = 0;
+    for (int digit=0;digit<=9;digit++) {
+        ans += cnt[n-1][digit][0];
+        ans += cnt[n-1][digit][1];
+        ans += cnt[n-1][digit][2];
+        ans += cnt[n-1][digit][3];
+    }
+    return ans;
+}
+
+int digitDP(string l, string r) {
+    std::function<string(int)> full9 = [&](int num_digit){
+        string res = "";
+        for (int i=0;i<num_digit;i++) res += '9';
+        return res;
+    };
+    std::function<string(int)> full0 = [&](int num_digit){
+        string res = "1";
+        for (int i=0;i<num_digit-1;i++) res += '0';
+        return res;
+    };
+    if ((int) l.size() == (int) r.size())
+        return digitDPSameDigit(l, r);
+    
+    int ans = 0;
+    ans += digitDPSameDigit(l, full9(l.size()));
+    for (int i=(int) l.size() +1;i<=(int) r.size() -1;i++) 
+        ans += digitDPSameDigit(full0(i), full9(i));
+    ans += digitDPSameDigit(full0(r.size()), r);
+    return ans;
+}
+
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
         freopen("out.txt", "w", stdout);
     #endif
-// 123 321
-    int n1, n2;
-    cin >> n1 >> n2;
-    std::function<int(int)> cal = [&](int n){
-        if (n < 10) return n+1;
-        /*
-        Tính trước hàng đầu tiên
-        Từ hàng thứ 2 trở đi tính theo hàng trước đó
-        Tính mọi chữ số với dạng ko có constraint - chữ số trước ko constraint, chữ số trước constraint nhưng chữ số sau nhỏ hơn 
-        Tính mọi chữ số với dạng có constraint
-        => Với từng chữ số tại hàng này tính toán cho nó
-        * Chữ số nhỏ hơn chữ số hàng hiện tại (n[index]) thì bằng tổng cả constraint và ko constraint của tất cả mọi số trước đó
-        * chữ số bằng n[index] thì ko constraint là tổng của mọi số ko constraint, constraint bằng constraint của chữ số trước đó
-        * chữ số > n[index] thì bằng ko constraint của mọi số đằng trước
-        */
-        // Initial state
-        string nstr = to_string(n);
-        vector<vector<vector<vector<int>>>> dp(nstr.size(), vector<vector<vector<int>>>(10, vector<vector<int>>(2, std::vector<int>(2))));
-        // [index][digit][constraint][leading_zero] 3245
-        dp[0][0][0][1] = 1; // 0xxx
-        for (int i=1;i<nstr[0] - '0';i++) {
-            dp[0][i][0][0] = 1; // 1xxx,2xxx
-        }
-        dp[0][nstr[0] - '0'][1][0] = 1; // 3xxx
-        // Tính toán các chữ số đằng sau
-        for (int i=1;i<(int) nstr.size();i++) {
-            int prevdigit = nstr[i-1] - '0';
-            int curdigit = nstr[i] - '0';
-            // Mọi số ko constraint
-            for (int p=0;p<=9;p++) {
-                for (int c=0;c<=9;c++) {
-                    if (c == 0 && p == 0) {
-                        dp[i][c][0][1] += dp[i-1][p][0][1]; // 00xx 
-                    } else
-                    if (c != p) {
-                    // điều kiện 2 số cạnh nhau khác nhau
-                        dp[i][c][0][0] += dp[i-1][p][0][0] + dp[i-1][p][0][1];
-                    }
-                }
-            }
-            // Constraint số đằng trước, số đằng sau ko constraint
-            for (int c=0;c<curdigit;c++) {
-                if (c != prevdigit)
-                    // [index][digit][constraint][leading_zero]
-                    // dp[i][c][0] += dp[i-1][prevdigit][1];
-                    dp[i][c][0][0] += dp[i-1][prevdigit][1][0];
-            }
-            // Constraint số trước & số sau
-            if (curdigit != prevdigit)
-                dp[i][curdigit][1][0] += dp[i-1][prevdigit][1][0];
-        }
-        // In ra kết quả
-        int ans = 0;
-        for (int d=0;d<=9;d++) {
-            ans += dp[nstr.size()-1][d][0][0] + dp[nstr.size()-1][d][0][1]
-            + dp[nstr.size()-1][d][1][0] + dp[nstr.size()-1][d][1][1];
-        }
-        return ans;
-    };
-    cout << cal(n2) - cal(n1-1);
+    cout << std::fixed << setprecision(15);
+    string l, r;
+    cin >> l >> r;
+    cout << digitDP(l, r); 
+
     show_exec_time();
 }
-// Hiện tại chưa cần làm gì phức tạp, digit mà kết quả cuối cùng ra bằng giá trị n là được
-// [index][digit][constraint]
-// Digit thì đúng rồi, nhưng ví dụ n = 3245, k = 0012 -> 12 nhưng không được 
-// đếm do 00 có 2 giá trị giống nhau
+/*
+Đọc chậm rãi
+Viết ra ý tưởng
+The pattern from simple input to output.
+
+TLE:
+    map vs unordered_map ??
+    int vs long long
+RE:
+    binary search - INF ??
+*/
