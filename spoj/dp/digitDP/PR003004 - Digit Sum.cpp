@@ -1,76 +1,146 @@
 // https://www.spoj.com/problems/PR003004/
 #include<bits/stdc++.h>
 
+typedef long long ll;
+using uint = unsigned int;
+using ull = unsigned long long;
+const ll mod = 1000000007; // 998244353  1000000009  1000000007 // đừng dùng ull
+#define ld long double
 #define int long long // __int128
+const int INF = std::numeric_limits<int>::max(); // use INT32_MAX for i32
 
 using namespace std;
 
-// Base digit DP 4 dimensions dp[index][digit][contraint][leading_zero]
-int digitDP(int n) { // n = 3245
-    // if (n < 10) return n+1;
-    // dp[index][digit][contraint][leading_zero]
-    // constraint = 1 thì leading_zero luôn = 0
-    string nstr = to_string(n);
+// digitDP[index][digit][constraint] constraint: 0/1/2/3 => ko/low/up/low&up constraint
+int digitDPSameDigit(string low, string up) {
+    assert(low.size() == up.size() && "Chia làm các khoảng có số chữ số bằng nhau");
+    int n = (int) up.size();
     // Initial state
-    vector<vector<vector<vector<int>>>> dp(nstr.size(), vector<vector<vector<int>>>(10, vector<vector<int>>(2, vector<int>(2, 0))));
-    vector<vector<vector<vector<int>>>> sum(nstr.size(), vector<vector<vector<int>>>(10, vector<vector<int>>(2, vector<int>(2, 0))));
-    dp[0][0][0][1] = 1; // xxxx => 0xxx
-    sum[0][0][0][1] = 0;
-    for (int i=1;i<nstr[0] - '0';i++) {
-        dp[0][i][0][0] = 1; // xxxx => 1xxx, 2xxx
-        sum[0][i][0][0] = i;
+    // dp[index][digit][constraint_0/1/2/3]
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(10, vector<int>(4, 0)));
+    // highlight-next-line
+    vector<vector<vector<int>>> sum(n, vector<vector<int>>(10, vector<int>(4, 0)));
+    if (up[0] == low[0]) {
+        dp[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
+        // highlight-next-line
+        sum[0][up[0] - '0'][3] = up[0] - '0'; // 1234 & 1567 => 1xxx
+    } else {
+        dp[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
+        // highlight-next-line
+        sum[0][low[0] - '0'][1] = low[0] - '0'; // 1234 & 3456 => 1xxx
+
+        for (int first_digit=low[0]-'0'+1;first_digit<=up[0]-'0'-1;first_digit++) {
+            dp[0][first_digit][0] = 1; // 2xxx
+            // highlight-next-line
+            sum[0][first_digit][0] = first_digit; // 2xxx
+        }
+        
+        dp[0][up[0] - '0'][2] = 1; // 3xxx
+        // highlight-next-line
+        sum[0][up[0] - '0'][2] = up[0] - '0'; // 3xxx
     }
-    dp[0][nstr[0] - '0'][1][0] = 1; // xxxx => 3xxx
-    sum[0][nstr[0] - '0'][1][0] = nstr[0] - '0';
-    // Transition
-    for (int index=1;index<(int) nstr.size();index++) { // index
-        for (int digit=0;digit<=9;digit++) { // digit
-            int prev_digit = nstr[index-1] - '0';
-            // Constraint - không constraint gì cả
-                // > Leading zero - khi 2 số đều bằng 0
-            if (digit == 0 && prev_digit == 0) { // 0xxx => 00xx -> không constraint
-                dp[index][digit][0][1] += dp[index-1][prev_digit][0][1];
+    // Tính toán các chữ số đằng sau
+    for (int index=1;index<n;index++) {
+        for (int digit=0;digit<10;digit++) {
+            // Không constraint => không constraint
+            for (int p=0;p<10;p++) {
+                dp[index][digit][0] += dp[index-1][p][0];
+                // highlight-next-line
+                sum[index][digit][0] += sum[index-1][p][0] + dp[index-1][p][0] * digit;
             }
-                // Không leading zero tại số hiện tại
-            for (int p=0;p<=9;p++) {
-                // 1xxx -> 1[0:9]xx    0xxx -> 0[0:9]xx
-                dp[index][digit][0][0] += dp[index-1][p][0][0];
-                sum[index][digit][0][0] += sum[index-1][p][0][0] + dp[index-1][p][0][0] * digit;
-                dp[index][digit][0][0] += dp[index-1][p][0][1];
-                sum[index][digit][0][0] += sum[index-1][p][0][1] + dp[index-1][p][0][1] * digit;
+            // Constraint trên => ko constraint
+            if (digit < up[index] - '0') {
+                dp[index][digit][0] += dp[index-1][up[index-1] - '0'][2];
+                // highlight-next-line
+                sum[index][digit][0] += sum[index-1][up[index-1] - '0'][2] + dp[index-1][up[index-1] - '0'][2] * digit;
             }
-            // Constraint số trước và không constraint số sau // 30xx 31xx
-                // Số sau phải nhỏ hơn cur_digit để ko bị constraint
-            int cur_digit = nstr[index] - '0';
-            if (digit < cur_digit) { // 3xxx -> 3[0:2]xx
-                dp[index][digit][0][0] += dp[index-1][prev_digit][1][0];
-                sum[index][digit][0][0] += sum[index-1][prev_digit][1][0] + dp[index-1][prev_digit][1][0] * digit;
+            // Constraint trên => tiếp tục constraint
+            if (digit == up[index] - '0') {
+                dp[index][digit][2] += dp[index-1][up[index-1] - '0'][2];
+                // highlight-next-line
+                sum[index][digit][2] += sum[index-1][up[index-1] - '0'][2] + dp[index-1][up[index-1] - '0'][2] * digit;
             }
-            // Constraint cả số trước và số sau
-            if (digit == cur_digit) { // 3xxx -> 32xx
-                dp[index][cur_digit][1][0] += dp[index-1][prev_digit][1][0];
-                sum[index][cur_digit][1][0] += sum[index-1][prev_digit][1][0] + dp[index-1][prev_digit][1][0] * digit;
+            // Constraint dưới => ko constraint
+            if (digit > low[index] - '0') {
+                dp[index][digit][0] += dp[index-1][low[index-1] - '0'][1];
+                // highlight-next-line
+                sum[index][digit][0] += sum[index-1][low[index-1] - '0'][1] + dp[index-1][low[index-1] - '0'][1] * digit;
+            }
+            // Constraint dưới => constraint dưới tiếp
+            if (digit == low[index] - '0') {
+                dp[index][digit][1] += dp[index-1][low[index-1] - '0'][1];
+                // highlight-next-line
+                sum[index][digit][1] += sum[index-1][low[index-1] - '0'][1] + dp[index-1][low[index-1] - '0'][1] * digit;
+            }
+            // Constraint 2 chiều => ko constraint
+            if (up[index-1] != low[index-1]) continue; // trước đó ko có constraint 2 chiều nữa
+            int prevdigit = up[index-1] - '0';
+            // Constraint 2 chiều hay constraint 1 chiều
+            if (up[index] == low[index]) {
+                // Constraint 2 chiều tiếp
+                if (digit == up[index] - '0') {
+                    dp[index][digit][3] += dp[index-1][prevdigit][3];
+                    // highlight-next-line
+                    sum[index][digit][3] += sum[index-1][prevdigit][3] + dp[index-1][prevdigit][3] * digit;
+                }
+            } else {
+                // constraint dưới
+                if (digit == low[index] - '0') {
+                    dp[index][digit][1] += dp[index-1][prevdigit][3];
+                    // highlight-next-line
+                    sum[index][digit][1] += sum[index-1][prevdigit][3] + dp[index-1][prevdigit][3] * digit;
+                } 
+                // không constraint nữa
+                if (low[index] - '0' < digit && digit < up[index] - '0') {
+                    dp[index][digit][0] += dp[index-1][prevdigit][3];
+                    // highlight-next-line
+                    sum[index][digit][0] += sum[index-1][prevdigit][3] + dp[index-1][prevdigit][3] * digit;
+                }
+                // constraint trên
+                if (digit == up[index] - '0') {
+                    dp[index][digit][2] += dp[index-1][prevdigit][3];
+                    // highlight-next-line
+                    sum[index][digit][2] += sum[index-1][prevdigit][3] + dp[index-1][prevdigit][3] * digit;
+                }
             }
         }
     }
-    // Get answer
+
+    // cout << ans; // sum[n-1][0:9][0/1/2/3];
     int ans = 0;
-    // dp[index = n.size()-1][all_digit][0/1][0/1]
     for (int digit=0;digit<=9;digit++) {
-        ans += sum[(int) nstr.size() -1][digit][0][0];
-        ans += sum[(int) nstr.size() -1][digit][0][1];
-        ans += sum[(int) nstr.size() -1][digit][1][0];
-        ans += sum[(int) nstr.size() -1][digit][1][1];
+        // highlight-start
+        ans += sum[n-1][digit][0];
+        ans += sum[n-1][digit][1];
+        ans += sum[n-1][digit][2];
+        ans += sum[n-1][digit][3];
+        // highlight-end
     }
     return ans;
 }
-void solve() {
-    int l, r;
-    cin >> l >> r;
-    if (l == 0) cout << digitDP(r) << '\n';
-    else
-        cout << digitDP(r) - digitDP(l-1) << '\n';
+
+int digitDP(string l, string r) {
+    std::function<string(int)> full9 = [&](int num_digit){
+        string res = "";
+        for (int i=0;i<num_digit;i++) res += '9';
+        return res;
+    };
+    std::function<string(int)> full0 = [&](int num_digit){
+        string res = "1";
+        for (int i=0;i<num_digit-1;i++) res += '0';
+        return res;
+    };
+    if ((int) l.size() == (int) r.size())
+        return digitDPSameDigit(l, r);
+    
+    int ans = 0;
+    ans += digitDPSameDigit(l, full9(l.size()));
+    for (int i=(int) l.size() +1;i<=(int) r.size() -1;i++) 
+        ans += digitDPSameDigit(full0(i), full9(i));
+    ans += digitDPSameDigit(full0(r.size()), r);
+    return ans;
 }
+
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
@@ -79,8 +149,15 @@ signed main(){
     #endif
     int n;
     cin >> n;
-    while (n--) solve();
+    while (n--) {
+        string l, r;
+        cin >> l >> r;
+        cout << digitDP(l, r) << '\n';
     }
+    
+    show_exec_time();
+}
+
 /*
 Bài này nếu mà ko dùng mảng sum thêm mà cứ chày cối tính chỉ dựa vào dp
 thì sẽ không thể tính được.
