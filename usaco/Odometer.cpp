@@ -19,6 +19,14 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
+
+#define dpcase(x, y) \
+    dp[index][digit][x] += dp[index-1][prevdigit][y]; \
+    touch[index][digit][x] = true; \
+    for (int f1=0;f1<n+1;f1++) \
+        for (int f2=0;f2<n+1;f2++) \
+            cnt[index][digit][x][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][y][f1][f2];
+
 // digitDP[index][digit][constraint] constraint: 0/1/2/3 => ko/low/up/low&up constraint
 /*
 Tính toán cho từng chữ số 1. 
@@ -54,64 +62,33 @@ int digitDPSameDigit(string low, string up, int first_d, int second_d) {
         touch[0][up[0] - '0'][2] = true; // 3xxx
         cnt[0][up[0] - '0'][2][first_d == up[0] - '0'][second_d == up[0] - '0'] += 1; // 3xxx
     }
-    /*
-    Không constraint => không constraint
-    Constraint trên => ko constraint
-                    => tiếp tục constraint
-    Constraint dưới => ko constraint
-                    => tiếp tục constraint
-    Constraint 2 chiều => ko constraint
-                       => constraint trên
-                       => constraint dưới
-                       => constraint 2 chiều
-    */
     // Tính toán các chữ số đằng sau
     for (int index=1;index<n;index++) {
         for (int digit=0;digit<10;digit++) {
             // Không constraint => không constraint
             for (int prevdigit=0;prevdigit<10;prevdigit++) {
                 if (!touch[index-1][prevdigit][0]) continue;
-                dp[index][digit][0] += dp[index-1][prevdigit][0];
-                touch[index][digit][0] = true;
-                for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][0][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][0][f1][f2];
+                dpcase(0, 0);
             }
 
             int prevdigit = up[index-1] - '0';
             // Constraint trên => ko constraint
             if (digit < up[index] - '0' && touch[index-1][prevdigit][2]) {
-                dp[index][digit][0] += dp[index-1][prevdigit][2];
-                touch[index][digit][0] = true;
-                for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][0][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][2][f1][f2];
+                dpcase(0, 2);
             }
             // Constraint trên => tiếp tục constraint
             if (digit == up[index] - '0' && touch[index-1][prevdigit][2]) {
-                dp[index][digit][2] += dp[index-1][prevdigit][2];
-                touch[index][digit][2] = true;
-                for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][2][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][2][f1][f2];
+                dpcase(2, 2);
             }
 
             prevdigit = low[index-1] - '0';
             // Constraint dưới => ko constraint
             if (digit > low[index] - '0' && touch[index-1][prevdigit][1]) {
-                dp[index][digit][0] += dp[index-1][prevdigit][1];
-                touch[index][digit][0] = true;
-                for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][0][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][1][f1][f2];
+                dpcase(0, 1);
             }
             // Constraint dưới => constraint dưới tiếp
             if (digit == low[index] - '0' && touch[index-1][prevdigit][1]) {
-                dp[index][digit][1] += dp[index-1][prevdigit][1];
-                touch[index][digit][1] = true;
-                for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][1][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][1][f1][f2];
+                dpcase(1, 1);
             }
             
             // Constraint 2 chiều => ko constraint
@@ -121,36 +98,20 @@ int digitDPSameDigit(string low, string up, int first_d, int second_d) {
             if (up[index] == low[index]) {
                 // Constraint 2 chiều tiếp
                 if (digit == up[index] - '0' && touch[index-1][prevdigit][3]) {
-                    dp[index][digit][3] += dp[index-1][prevdigit][3];
-                    touch[index][digit][3] = true;
-                    for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][3][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][3][f1][f2];
+                    dpcase(3, 3);
                 }
             } else {
                 // constraint dưới
                 if (digit == low[index] - '0' && touch[index-1][prevdigit][3]) {
-                    dp[index][digit][1] += dp[index-1][prevdigit][3];
-                    touch[index][digit][1] = true;
-                    for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][1][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][3][f1][f2];
+                    dpcase(1, 3);
                 } 
                 // không constraint nữa
                 if (low[index] - '0' < digit && digit < up[index] - '0' && touch[index-1][prevdigit][3]) {
-                    dp[index][digit][0] += dp[index-1][prevdigit][3];
-                    touch[index][digit][0] = true;
-                    for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][0][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][3][f1][f2];
+                    dpcase(0, 3);
                 }
                 // constraint trên
                 if (digit == up[index] - '0' && touch[index-1][prevdigit][3]) {
-                    dp[index][digit][2] += dp[index-1][prevdigit][3];
-                    touch[index][digit][2] = true;
-                    for (int f1=0;f1<n+1;f1++)
-                    for (int f2=0;f2<n+1;f2++)
-                        cnt[index][digit][2][f1 + (digit == first_d)][f2 + (digit == second_d)] += cnt[index-1][prevdigit][3][f1][f2];
+                    dpcase(2, 3);
                 }
             }
         }
