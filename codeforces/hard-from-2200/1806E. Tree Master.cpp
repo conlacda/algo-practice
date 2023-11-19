@@ -14,7 +14,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-vector<ll> depth_of_tree(vector<vector<ll>> tree) {
+vector<ll> depth_of_tree(vector<vector<ll>>&tree) {
     vector<ll> depth((ll) tree.size(), -1);
     depth[0] = 0;
     std::function<void(ll, ll)> dfs = [&](ll u, ll p){
@@ -50,7 +50,7 @@ struct MoOnTree {
 private:
     template<typename LL>class LCA{struct Euler{LL vertex, height, index;};template<typename T>class LCASegmentTree{private:ll n;vector<T>dat;public:T merge(T a,T b){if(a.height>b.height)return b;return a;}LCASegmentTree(vector<T>v){int _n=v.size();n=1;while(n<_n)n*=2;dat.resize(2*n-1);for(int i=0;i<_n;i++)dat[n+i-1]=v[i];for(int i=n-2;i>=0;i--)dat[i]=merge(dat[i*2+1],dat[i*2+2]);} LCASegmentTree(int _n){n=1;while(n<_n)n*=2;dat.resize(2*n-1); } void set_val(int i,T x){i+=n-1;dat[i]=x;while(i>0){i=(i-1)/2;dat[i]=merge(dat[i*2+1],dat[i*2+2]);}}T query(int l,int r){r++;T left=T{INT_MAX,INT_MAX,INT_MAX},right=T{INT_MAX,INT_MAX,INT_MAX};l+=n-1;r+=n-1;while(l<r){if((l&1)==0)left=merge(left,dat[l]);if((r&1)==0)right=merge(dat[r-1],right);l=l/2;r=(r-1)/2;}return merge(left,right);}};public:int n;vector<vector<LL>> graph;vector<bool> visited;vector<Euler> eulertour, first;LCASegmentTree<Euler> *seg;LCA() {}LCA(vector<vector<LL>> graph, LL root = 0){build(graph, root);}void build(vector<vector<LL>> graph, LL root = 0) {this->graph = graph;n = graph.size();visited.resize(n);first.resize(n);makeEuler(root);}void makeEuler(LL root){std::fill(visited.begin(), visited.end(), false);int height =0;std::function<void(int)> explore = [&](int u){visited[u] = true;height++;eulertour.push_back(Euler{u, height, (int) eulertour.size()});for (auto v: this->graph[u]){if (!visited[v]) {explore(v);height--;eulertour.push_back(Euler{u, height, (int) eulertour.size()});}}};explore(root);std::fill(visited.begin(), visited.end(), false);for (auto e: eulertour){if (!visited[e.vertex]){visited[e.vertex] = true;first[e.vertex] = e;}}this->seg = new LCASegmentTree<Euler>(eulertour);}LL lca(LL u, LL v){LL uidx = first[u].index;LL vidx = first[v].index;if (uidx > vidx) swap(uidx, vidx);Euler a = seg->query(uidx, vidx);return a.vertex;}vector<LL> height(){vector<LL> h(this->n, 0);for (auto e: eulertour) h[e.vertex] = e.height;return h;}LL lca(LL r, LL u, LL v){LL ru = lca(r, u);LL rv = lca(r, v);LL uv = lca(u, v);if (ru == rv) return uv;if (ru == uv) return rv;return ru;}};
     std::vector<ll> first, second, eulertour;
-    vector<ll> makeEulerTour(vector<vector<ll>> adj) {
+    vector<ll> makeEulerTour(vector<vector<ll>>& adj) {
         vector<ll> eulertour;
         first.resize(n); second.resize(n); // first[v] - thời điểm duyệt v, second[v] - thời điểm ra khỏi v
         ll clock = 0;
@@ -67,26 +67,26 @@ private:
         return eulertour;
     }
     // Chuyển query trên node sang query trên euler tour
-    vector<Query> fromEdgeToEuler(vector<Query> queries) {
-        vector<Query> res;
-        for (auto q: queries) {
-            ll u = q.l, v= q.r, idx = q.index;
+    vector<Query> fromEdgeToEuler(vector<Query>& queries) {
+        for (auto& q: queries) {
+            ll u = q.l, v= q.r;
             if (first[u] > first[v]) swap(u, v); 
             if (lca.lca(u, v) == u) {
                 // first(u) -> first(v) (má trái)
-                res.push_back(Query{first[u], first[v], idx});
+                q.l = first[u];
+                q.r = first[v];
             } else {
                 // second(u) -> first(v)
-                res.push_back({second[u], first[v], idx});
+                q.l = second[u];
+                q.r = first[v];
             }
         }
-        return res;
+        return queries;
     }
 public:
     ll n;
     vector<vector<ll>> graph; // mảng đầu vào
     vector<ll> weight;
-    vector<Query> queries; // l, r, index
     LCA<ll> lca;
     vector<bool> vis; // đánh dấu số lần đỉnh đó đã đi qua
     vector<Ans> ans; // index, val
@@ -94,13 +94,12 @@ public:
     vector<ll> depth_left, depth_right, depth;
     vector<ll> touch_times;
     vector<ll> points;
-    MoOnTree(vector<vector<ll>> g, vector<ll> weight, vector<Query> queries) {
+    MoOnTree(vector<vector<ll>> g, vector<ll> weight) {
         this->n = (ll) g.size();
         this->graph = g;
         this->weight = weight;
         lca.build(g);
         eulertour = makeEulerTour(graph);
-        this->queries = fromEdgeToEuler(queries);
         vis.resize(n, false);
         depth.resize(this->n, 0);
         depth_left.resize(this->n, 0);
@@ -141,7 +140,8 @@ public:
         }
         touch_times[depth[edge]]--;
     }
-    void solve() {
+    void solve(vector<Query> queries) {
+        fromEdgeToEuler(queries);
         sort(queries.begin(), queries.end());
         ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
@@ -180,8 +180,8 @@ int main(){
         u--; v--;
         queries.push_back(Query{u, v, i});
     }
-    MoOnTree mo(adj, w, queries);
-    mo.solve();
+    MoOnTree mo(adj, w);
+    mo.solve(queries);
 
     cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
@@ -198,5 +198,4 @@ Hiện tại l, r đang có dep = 3. Khi này l sẽ dịch dần trên eulertou
 l dịch tới dep=4, dep=5, touch_times[dep=4,5]++ -> 1. khi này không thay đổi giá trị gì cả
 r dịch tới dep=4, dep=5, touch_times[dep=4,5]++ -> 2. Khi này giá trị sẽ được cộng depth_left[4] * depth_right[4], depth_left[4] * depth_right[4] 
 Bài này thuộc dạng 2 nên không cần add rồi remove lca.lca(l, r) mà chỉ cần thêm giá trị lúc in ra là xong
-
 */
