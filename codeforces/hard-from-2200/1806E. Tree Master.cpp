@@ -120,12 +120,12 @@ public:
         };
         dfs(0, 0);
     }
-    void resolve(ll index, vector<ll> *depthVal) {
+    void resolve(ll index, vector<ll>& depthVal) {
         ll edge = eulertour[index];
         vis.at(edge) = !vis.at(edge); // nếu 1 đỉnh visit 1 lần thì nó nằm trong khoảng, 2 lần là nằm ngoài khoảng
         ll dep = depth.at(edge);
         if (!vis[edge]) remove(edge);
-        (*depthVal)[dep] = weight[edge]; // depth trái hay phải
+        depthVal[dep] = weight[edge]; // depth trái hay phải
         if (vis[edge]) add(edge);
     }
     void add(ll edge) {
@@ -145,10 +145,10 @@ public:
         sort(queries.begin(), queries.end());
         ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
-            while (cur_l > query.l) resolve(--cur_l, &depth_left);
-            while (cur_r < query.r) resolve(++cur_r, &depth_right);
-            while (cur_l < query.l) resolve(cur_l++, &depth_left);
-            while (cur_r > query.r) resolve(cur_r--, &depth_right);
+            while (cur_l > query.l) resolve(--cur_l, depth_left);
+            while (cur_r < query.r) resolve(++cur_r, depth_right);
+            while (cur_l < query.l) resolve(cur_l++, depth_left);
+            while (cur_r > query.r) resolve(cur_r--, depth_right);
             // Xét tới lca.lca(u, v)
             ll p = lca.lca(eulertour[query.l], eulertour[query.r]);
             ans.push_back({query.index, cur_result + points[p]});
