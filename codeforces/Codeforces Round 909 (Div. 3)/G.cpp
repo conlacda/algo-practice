@@ -171,13 +171,16 @@ signed main(){
     show_exec_time();
 }
 /*
-Đọc chậm rãi
-Viết ra ý tưởng
-The pattern from simple input to output.
+Đề bài ngắn gọn:
+* Cho mảng p là id của các node trên cây.
+* Xử lý query với mỗi query bao gồm u, v, x với u, v là index trên p, x là node trên cây.
+    Hỏi rằng từ p[u]->p[v] có node nào là con của x hay không.
 
-TLE:
-    map vs unordered_map ??
-    int vs long long
-RE:
-    binary search - INF ??
+Giải:
+1 điểm x là cha của điểm y khi first[x] < first[y] < second[y] < second[x].
+Tại đây sẽ sử dụng tính chất này first[x] < first[y] < second[x]
+* p có thể chuyển thành mảng first[].
+* Query bây giờ trở thành hỏi rằng từ index u->v có giá trị nào nằm trong khoảng first[x] -> second[x] hay không.
+    Query dạng này thì sẽ build fenwick tree rỗng rồi với mỗi node thêm vào cửa sổ data của Mo thì 
+    mk sẽ thêm vào index first[] 1 đơn vị. Rồi query xem từ first[x] -> second[x] lớn hơn 0 thì là có điểm thỏa mãn. Không thì là No
 */
