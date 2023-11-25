@@ -198,3 +198,16 @@ signed main(){
     
     show_exec_time();
 }
+/*
+Tại đây nhận định rằng không thể tracking xem 1 chữ số xuất hiện bao nhiêu lần được.
+Vì khi này các số sẽ không bị gom lại để đếm 1 lần mà mỗi số sẽ cho ra 1 [k] riêng.
+Ví dụ: 1231 -> dp[][][][k = map(1->2, 2->1, 3->1)], 2231 -> dp[][][][k = map(1->1, 2->2, 3->1)]
+Khi này thì kích thước của dp bản chất chính là toàn bộ số lượng số có trong range -> chính là duyệt từng số trong range -> TLE/MLE
+
+Với việc mỗi chữ số xuất hiện 1 nửa trong số này thì có 2 trường hợp:
+* 1 chữ số xuất hiện >= half
+* 2 chữ số cùng xuất hiện >= half
+=> Đếm cho từng chữ số 1 và đếm cho 2 cặp chữ số 1 lúc rồi trừ đi cho nhau là xong.
+=> Số lần chạy DP sẽ tăng lên nhưng kích thước dp sẽ giảm do khi này [k] sẽ chỉ là 1 chữ số đếm số lần xuất hiện của chữ số d
+-> kích thước dp chỉ tăng 10 * 10 (khi xét 2 chữ số) và số lần lặp tăng 10*10 -> bộ nhớ và tốc độ đều đủ để thỏa mãn.
+*/
