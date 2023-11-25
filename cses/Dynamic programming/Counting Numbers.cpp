@@ -3,13 +3,7 @@
  
 #include<bits/stdc++.h>
  
-typedef long long ll;
-using uint = unsigned int;
-using ull = unsigned long long;
-const ll mod = 1000000007; // 998244353  1000000009  1000000007 // đừng dùng ull
-#define ld long double
 #define int long long // __int128
-const int INF = std::numeric_limits<int>::max(); // use INT32_MAX for i32
  
 using namespace std;
  
@@ -36,25 +30,27 @@ int digitDPSameDigit(string low, string up) {
     // dp[index][digit][constraint_0/1/2/3]
     vector<vector<vector<int>>> dp(n, vector<vector<int>>(10, vector<int>(4, 0)));
     vector<vector<vector<bool>>> touch(n, vector<vector<bool>>(10, vector<bool>(4, false)));
-    vector<vector<vector<int>>> cnt(n, vector<vector<int>>(10, vector<int>(4, 0)));
-    // int cnt[n][10][4][k]; // state cho bài toán hiện tại
+    int cnt[n][10][4];
+    memset(cnt, 0, sizeof(cnt));
     if (up[0] == low[0]) {
-        dp[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
-        touch[0][up[0] - '0'][3] = true; // 1234 & 1567 => 
-        cnt[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
+        int digit = up[0] - '0';
+        dp[0][digit][3] = 1; // 1234 & 1567 => 1xxx
+        touch[0][digit][3] = true; // 1234 & 1567 => 
+        cnt[0][digit][3] = 1; // 1234 & 1567 => 1xxx
     } else {
-        dp[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
-        touch[0][low[0] - '0'][1] = true; // 1234 & 3456 => 1xxx
-        cnt[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
-        for (int first_digit=low[0]-'0'+1;first_digit<=up[0]-'0'-1;first_digit++) {
-            dp[0][first_digit][0] = 1; // 2xxx
-            touch[0][first_digit][0] = true; // 
-            cnt[0][first_digit][0] = 1; // 2xxx
+        int digit = low[0] - '0';
+        dp[0][digit][1] = 1; // 1234 & 3456 => 1xxx
+        touch[0][digit][1] = true; // 1234 & 3456 => 1xxx
+        cnt[0][digit][1] = 1; // 1234 & 3456 => 1xxx
+        for (digit=low[0]-'0'+1;digit<=up[0]-'0'-1;digit++) {
+            dp[0][digit][0] = 1; // 2xxx
+            touch[0][digit][0] = true; // 
+            cnt[0][digit][0] = 1; // 2xxx
         }
-        
-        dp[0][up[0] - '0'][2] = 1; // 3xxx
-        touch[0][up[0] - '0'][2] = true; // 3xxx
-        cnt[0][up[0] - '0'][2] = 1; // 3xxx        
+        digit = up[0] - '0';
+        dp[0][digit][2] = 1; // 3xxx
+        touch[0][digit][2] = true; // 3xxx
+        cnt[0][digit][2] = 1; // 3xxx        
     }
     /*
     Không constraint => không constraint
@@ -158,17 +154,4 @@ signed main(){
     string l, r;
     cin >> l >> r;
     cout << digitDP(l, r); 
- 
-    show_exec_time();
 }
-/*
-Đọc chậm rãi
-Viết ra ý tưởng
-The pattern from simple input to output.
- 
-TLE:
-    map vs unordered_map ??
-    int vs long long
-RE:
-    binary search - INF ??
-*/
