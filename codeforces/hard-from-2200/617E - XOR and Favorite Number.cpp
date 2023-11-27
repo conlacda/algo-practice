@@ -15,15 +15,32 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-// Temporary version                
-const ll blockSize = 500; // 300, 700
+inline int64_t hilbertOrder(int x, int y, int pow = 21, int rotate = 0) {
+    if (pow == 0) {
+        return 0;
+    }
+    int hpow = 1 << (pow-1);
+    int seg = (x < hpow) ? (
+        (y < hpow) ? 0 : 3
+    ) : (
+        (y < hpow) ? 1 : 2
+    );
+    seg = (seg + rotate) & 3;
+    const int rotateDelta[4] = {3, 0, 0, 1};
+    int nx = x & (x ^ hpow), ny = y & (y ^ hpow);
+    int nrot = (rotate + rotateDelta[seg]) & 3;
+    int64_t subSquareSize = int64_t(1) << (2*pow - 2);
+    int64_t ans = seg * subSquareSize;
+    int64_t add = hilbertOrder(nx, ny, pow-1, nrot);
+    ans += (seg == 1 || seg == 2) ? add : (subSquareSize - add - 1);
+    return ans;
+}
 
 struct Query {
     ll l, r, index;
+    ll ord;
     friend bool operator<(Query& a, Query& b) {
-        // những cái thuộc cùng 1 block sẽ đứng cạnh nhau, những cái cùng block thì r sẽ xếp từ bé tới lớn
-        if (a.l/blockSize != b.l/blockSize) return a.l < b.l;
-        return (a.l/blockSize & 1) ? (a.r < b.r) : (a.r > b.r);
+        return a.ord < b.ord;
     }
     friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
@@ -47,7 +64,7 @@ public:
     ll k;
     ll left, right;
     ll cur_xor = 0;
-    Mo(vector<ll> a, vector<Query> queries, ll k) {
+    Mo(vector<ll> a, ll k) {
         this->a = a;
         cnt.resize(1<<20, 0);
         this->queries = queries;
@@ -90,10 +107,10 @@ public:
     ll getResult() {
         return this->cur_result;
     }
-    void solve() {
+    void solve(vector<Query>& queries) {
+        for (auto &q: queries) q.ord = hilbertOrder(q.l, q.r);
         sort(queries.begin(), queries.end());
         for (auto query: queries) {
-
             while (left > query.l) left--, add_left(left);
             while (right < query.r) right++, add_right(right);
             while (left < query.l) remove_left(left), left++;
@@ -124,8 +141,8 @@ int main(){
         ll l, r; cin >> l >> r; l--; r--;
         queries.push_back(Query{l, r, i});
     }
-    Mo mo(a, queries, k);
-    mo.solve();
+    Mo mo(a, k);
+    mo.solve(queries);
 
     cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
