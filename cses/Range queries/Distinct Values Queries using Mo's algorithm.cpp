@@ -1,9 +1,10 @@
 // https://cses.fi/problemset/task/1734
+// https://cses.fi/problemset/task/1734
 #include<bits/stdc++.h>
  
 typedef long long ll;
 const ll mod = 1e9 + 7;
-#define ld long double
+#define int long long // __int128
  
 using namespace std;
  
@@ -13,7 +14,7 @@ using namespace std;
 #define dbg(...)
 #define destructure(a) #a
 #endif
-
+ 
 template<typename T = int>
 struct Compress {
     vector<T> rcv; // recover - giá trị mảng ban đầu đã sort và xóa unique
@@ -26,7 +27,7 @@ struct Compress {
         rcv = v;
         sort(rcv.begin(), rcv.end());
         rcv.resize(unique(rcv.begin(), rcv.end()) - rcv.begin());
-
+ 
         cpr = v;
         for (int i = 0; i < (int) cpr.size(); ++i) {
             cpr[i] = lower_bound(rcv.begin(), rcv.end(), cpr[i]) - rcv.begin(); // O(logN) thay cho map
@@ -44,15 +45,30 @@ struct Compress {
         return rcv[compressedVal];
     }   
 };
-
-const ll blockSize = 1000;
  
+
+inline int64_t hilbertOrder(int x, int y, int pow = 21, int rotate = 0) {
+  if (pow == 0) {
+    return 0;
+  }
+  int hpow = 1 << (pow-1);
+  int seg = (x < hpow) ? ((y < hpow) ? 0 : 3) : ((y < hpow) ? 1 : 2);
+  seg = (seg + rotate) & 3;
+  const int rotateDelta[4] = {3, 0, 0, 1};
+  int nx = x & (x ^ hpow), ny = y & (y ^ hpow);
+  int nrot = (rotate + rotateDelta[seg]) & 3;
+  int64_t subSquareSize = int64_t(1) << (2*pow - 2);
+  int64_t ans = seg * subSquareSize;
+  int64_t add = hilbertOrder(nx, ny, pow-1, nrot);
+  ans += (seg == 1 || seg == 2) ? add : (subSquareSize - add - 1);
+  return ans;
+}
+
 struct Query {
-    ll l, r, index;
-    friend bool operator<(Query a, Query b) {
-        // những cái thuộc cùng 1 block sẽ đứng cạnh nhau, những cái cùng block thì r sẽ xếp từ bé tới lớn
-        if (a.l/blockSize == b.l/blockSize) return a.r < b.r;
-        return a.l/blockSize < b.l/blockSize;
+    int l, r, index;
+    ll ord = -1;
+    friend bool operator<(Query& a, Query& b) {
+        return a.ord < b.ord;
     }
     friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
@@ -63,20 +79,18 @@ struct Ans {
     }
     friend std::ostream& operator<<(std::ostream& os, const Ans &s) { return os << destructure(s);}
 };
- 
+
 struct Mo {
 private:
     vector<ll> a; // mảng đầu vào
-    vector<Query> queries; // l, r, index
 public:
     vector<ll> data; // lưu trạng thái hiện tại - lưu tần số của từng số có trong range [left, right] hiện tại
     vector<Ans> ans; // index, val
     ll cur_result = 0; // giá trị hiện tại, đối với những bài giá trị tuyến tính khi add, remove thì dùng, ko thì tính trực tiếp từ mảng data
-    Compress<ll> c;
-    Mo(vector<ll> a, vector<Query> queries) {
+    Compress<int> c;
+    Mo(vector<ll>& a) {
         this->a = a;
-        data.resize(a.size(), 0);
-        this->queries = queries;
+        data.resize((int) a.size(), 0);
         c.build(a);
     }
     void add(ll index) {
@@ -92,7 +106,8 @@ public:
     ll getResult() {
         return this->cur_result;
     }
-    void solve() {
+    void solve(vector<Query>& queries) {
+        for (auto& q: queries) q.ord = hilbertOrder(q.l, q.r);
         sort(queries.begin(), queries.end());
         ll left = 0, right = -1;
         for (auto query: queries) {
@@ -105,13 +120,8 @@ public:
         sort(ans.begin(), ans.end());
     }
 };
-/*
-Mo mo(a, queries);
-mo.solve();
-for (auto v: mo.ans) cout << v << ' ';
-*/
  
-int main(){
+signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
@@ -125,11 +135,12 @@ int main(){
     for (ll i=0;i<q;i++) {
         ll l, r;
         cin >> l >> r;l--;r--;
-        queries.push_back(Query{l, r, i});
+        Query q = Query{l, r, i};
+        queries.push_back(q);
     }
     // dbg(queries);
-    Mo mo(a, queries);
-    mo.solve();
+    Mo mo(a);
+    mo.solve(queries);
     for (auto v: mo.ans) {
         cout << v.val << '\n';
     }
