@@ -2,6 +2,7 @@
 #include<bits/stdc++.h>
 
 typedef long long ll;
+// #define int long long // __int128
 const int INF = std::numeric_limits<int>::max(); // use INT32_MAX for i32
 
 using namespace std;
@@ -18,7 +19,7 @@ using namespace std;
 template <typename T>
 struct FenwickTree {
 private:
-    vector<T> bit;
+    vector<T> bit; // binary indexed tree
     T n;
 public:
     FenwickTree(){}
@@ -54,35 +55,48 @@ public:
 };
 
 // euler_tour_on_tree
-vector<int> first, second;
+vector<int> first, second, eulertour;
 void makeEulerTour(vector<vector<int>>& adj) {
     int n = adj.size();
-    first.resize(n); second.resize(n); // first[v] - thời điểm duyệt v, second[v] - thời điểm ra khỏi v
+    eulertour.clear(); first.resize(n); second.resize(n); // first[v] - thời điểm duyệt v, second[v] - thời điểm ra khỏi v
     int clock = 0;
     std::function<void(int, int)> dfs = [&](int u, int p){
+        eulertour.push_back(u);
         first[u] = clock++;
         for (auto v: adj[u]) {
             if (v != p) dfs(v, u);
         }
         second[u] = clock++;
+        eulertour.push_back(u);
     };
     dfs(0, 0);
 }
 
-// Temporary version                
-const int blockSize = 400; // 300, 700
+inline int64_t hilbertOrder(int x, int y, int pow = 21, int rotate = 0) { // 2**pow là số lượng query sẽ xử lý
+    if (pow == 0) return 0;
+    int hpow = 1 << (pow-1);
+    int seg = (x < hpow) ? ((y < hpow) ? 0 : 3) : ((y < hpow) ? 1 : 2);
+    seg = (seg + rotate) & 3;
+    const int rotateDelta[4] = {3, 0, 0, 1};
+    int nx = x & (x ^ hpow), ny = y & (y ^ hpow);
+    int nrot = (rotate + rotateDelta[seg]) & 3;
+    int64_t subSquareSize = int64_t(1) << (2*pow - 2);
+    int64_t ans = seg * subSquareSize;
+    int64_t add = hilbertOrder(nx, ny, pow-1, nrot);
+    ans += (seg == 1 || seg == 2) ? add : (subSquareSize - add - 1);
+    return ans;
+}
 
 struct Query {
     int l, r, x, index;
+    ll ord = -1;
     friend bool operator<(Query& a, Query& b) {
-        // những cái thuộc cùng 1 block sẽ đứng cạnh nhau, những cái cùng block thì r sẽ xếp từ bé tới lớn
-        if (a.l/blockSize != b.l/blockSize) return a.l < b.l;
-        return (a.l/blockSize & 1) ? (a.r < b.r) : (a.r > b.r);
+        return a.ord < b.ord;
     }
     friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
 struct Ans {
-    int index, val;
+    ll index, val;
     friend bool operator<(Ans& a, Ans& b) {
         return a.index < b.index;
     }
@@ -105,6 +119,7 @@ public:
     }
     void add(int index) {
         fw.add(a[index], 1);
+        // add, set, sum
     }
     void remove(int index) {
         fw.add(a[index], -1);
@@ -115,6 +130,7 @@ public:
         return 0;
     }
     void solve(vector<Query>& queries) {
+        for (auto& q: queries) q.ord = hilbertOrder(q.l, q.r);
         sort(queries.begin(), queries.end());
         int left = 0, right = -1;
         for (auto query: queries) {
@@ -171,16 +187,13 @@ signed main(){
     show_exec_time();
 }
 /*
-Đề bài ngắn gọn:
-* Cho mảng p là id của các node trên cây.
-* Xử lý query với mỗi query bao gồm u, v, x với u, v là index trên p, x là node trên cây.
-    Hỏi rằng từ p[u]->p[v] có node nào là con của x hay không.
+Đọc chậm rãi
+Viết ra ý tưởng
+The pattern from simple input to output.
 
-Giải:
-1 điểm x là cha của điểm y khi first[x] < first[y] < second[y] < second[x].
-Tại đây sẽ sử dụng tính chất này first[x] < first[y] < second[x]
-* p có thể chuyển thành mảng first[].
-* Query bây giờ trở thành hỏi rằng từ index u->v có giá trị nào nằm trong khoảng first[x] -> second[x] hay không.
-    Query dạng này thì sẽ build fenwick tree rỗng rồi với mỗi node thêm vào cửa sổ data của Mo thì 
-    mk sẽ thêm vào index first[] 1 đơn vị. Rồi query xem từ first[x] -> second[x] lớn hơn 0 thì là có điểm thỏa mãn. Không thì là No
+TLE:
+    map vs unordered_map ??
+    int vs long long
+RE:
+    binary search - INF ??
 */
