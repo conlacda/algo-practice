@@ -3,7 +3,7 @@
 
 typedef long long ll;
 const ll mod = 1e9 + 7;
-#define ld long double
+#define int long long // __int128
 
 using namespace std;
 
@@ -28,22 +28,36 @@ vector<ll> depth_of_tree(vector<vector<ll>>&tree) {
     return depth;
 }
 
-const ll blockSize = 500; // 300, 700
+inline int64_t hilbertOrder(int x, int y, int pow = 21, int rotate = 0) { // 2**pow là số lượng query sẽ xử lý
+    if (pow == 0) return 0;
+    int hpow = 1 << (pow-1);
+    int seg = (x < hpow) ? ((y < hpow) ? 0 : 3) : ((y < hpow) ? 1 : 2);
+    seg = (seg + rotate) & 3;
+    const int rotateDelta[4] = {3, 0, 0, 1};
+    int nx = x & (x ^ hpow), ny = y & (y ^ hpow);
+    int nrot = (rotate + rotateDelta[seg]) & 3;
+    int64_t subSquareSize = int64_t(1) << (2*pow - 2);
+    int64_t ans = seg * subSquareSize;
+    int64_t add = hilbertOrder(nx, ny, pow-1, nrot);
+    ans += (seg == 1 || seg == 2) ? add : (subSquareSize - add - 1);
+    return ans;
+}
 
 struct Query {
-    ll l, r, index;
-    friend bool operator<(Query a, Query b) {
-        if (a.l/blockSize == b.l/blockSize) return a.r < b.r;
-        return a.l/blockSize < b.l/blockSize;
+    int l, r, index;
+    ll ord = -1;
+    friend bool operator<(Query& a, Query& b) {
+        return a.ord < b.ord;
     }
-    friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
+    friend std::ostream& operator<<(std::ostream& os, const Query& s) { return os << destructure(s);}
 };
+
 struct Ans {
     ll index, val;
-    friend bool operator<(Ans a, Ans b) {
+    friend bool operator<(Ans& a, Ans& b) {
         return a.index < b.index;
     }
-    friend std::ostream& operator<<(std::ostream& os, const Ans &s) { return os << destructure(s);}
+    friend std::ostream& operator<<(std::ostream& os, const Ans& s) { return os << destructure(s);}
 };
 
 struct MoOnTree {
@@ -142,6 +156,7 @@ public:
     }
     void solve(vector<Query> queries) {
         fromEdgeToEuler(queries);
+        for (auto& q: queries) q.ord = hilbertOrder(q.l, q.r);
         sort(queries.begin(), queries.end());
         ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
@@ -158,7 +173,7 @@ public:
     }
 };
 
-int main(){
+signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
@@ -183,7 +198,6 @@ int main(){
     MoOnTree mo(adj, w);
     mo.solve(queries);
 
-    cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
 /*
 Bài này sử dụng Mo's algorithm on tree, hiện tại lời giải đang khá rắc rối,
