@@ -5,6 +5,7 @@
 typedef long long ll;
 const ll mod = 1e9 + 7;
 #define ld long double
+#define int long long // __int128
 
 using namespace std;
 
@@ -73,9 +74,9 @@ const ll blockSize = 500; // 300, 700
 struct Query {
     ll l, r, index;
     friend bool operator<(Query a, Query b) {
-        // những cái thuộc cùng 1 block sẽ đứng cạnh nhau, những cái cùng block thì r sẽ xếp từ bé tới lớn
-        if (a.l/blockSize == b.l/blockSize) return a.r < b.r;
-        return a.l/blockSize < b.l/blockSize;
+        if (a.l / blockSize != b.l / blockSize)
+            return a.l < b.l;
+        return (a.l / blockSize & 1) ? (a.r < b.r) : (a.r > b.r);
     }
     friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
@@ -149,14 +150,14 @@ public:
         sort(w.begin(), w.end());
         dbg(w);
         ll bound = 0;
-        for (int i=0;i<w.size();i++) {
+        for (int i=0;i<(int) w.size();i++) {
             if (bound == w[i]) continue;
             bound++;
             if (bound != w[i]) break;
         }
 
         // Xóa đi các phần tử lớn hơn bound
-        for (int i=0;i<this->weight.size();i++) {
+        for (int i=0;i<(int) this->weight.size();i++) {
             if (this->weight[i] > bound) this->weight[i] = -1;
         }
         return bound;
@@ -222,7 +223,7 @@ mo.solve(vector<Query> queries);
 Các hàm cần thay đổi để fit với từng bài: resolve(), add(), remove() và đoạn xét lca(u, v)
 */
 
-int main(){
+signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
