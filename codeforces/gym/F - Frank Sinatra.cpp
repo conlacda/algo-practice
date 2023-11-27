@@ -69,7 +69,7 @@ vector<T> depth_on_tree(vector<vector<T>> tree) {
     return depth;
 }
 
-const ll blockSize = 500; // 300, 700
+const ll blockSize = 700; // 300, 700
 
 struct Query {
     ll l, r, index;
