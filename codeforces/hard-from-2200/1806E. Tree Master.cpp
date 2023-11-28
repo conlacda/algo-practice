@@ -3,7 +3,7 @@
 
 typedef long long ll;
 const ll mod = 1e9 + 7;
-#define int long long // __int128
+#define ld long double
 
 using namespace std;
 
@@ -49,15 +49,15 @@ struct Query {
     friend bool operator<(Query& a, Query& b) {
         return a.ord < b.ord;
     }
-    friend std::ostream& operator<<(std::ostream& os, const Query& s) { return os << destructure(s);}
+    friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
 
 struct Ans {
     ll index, val;
-    friend bool operator<(Ans& a, Ans& b) {
+    friend bool operator<(Ans a, Ans b) {
         return a.index < b.index;
     }
-    friend std::ostream& operator<<(std::ostream& os, const Ans& s) { return os << destructure(s);}
+    friend std::ostream& operator<<(std::ostream& os, const Ans &s) { return os << destructure(s);}
 };
 
 struct MoOnTree {
@@ -155,8 +155,8 @@ public:
         touch_times[depth[edge]]--;
     }
     void solve(vector<Query> queries) {
-        fromEdgeToEuler(queries);
-        for (auto& q: queries) q.ord = hilbertOrder(q.l, q.r);
+        queries = fromEdgeToEuler(queries);
+        for (auto& v: queries) v.ord = hilbertOrder(v.l, v.r);
         sort(queries.begin(), queries.end());
         ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
@@ -173,7 +173,7 @@ public:
     }
 };
 
-signed main(){
+int main(){
     ios::sync_with_stdio(0); cin.tie(0);
     #ifdef DEBUG
         freopen("inp.txt", "r", stdin);
@@ -198,6 +198,7 @@ signed main(){
     MoOnTree mo(adj, w);
     mo.solve(queries);
 
+    cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s\n";
 }
 /*
 Bài này sử dụng Mo's algorithm on tree, hiện tại lời giải đang khá rắc rối,
