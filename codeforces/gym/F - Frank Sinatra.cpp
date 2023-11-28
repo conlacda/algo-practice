@@ -69,17 +69,30 @@ vector<T> depth_on_tree(vector<vector<T>> tree) {
     return depth;
 }
 
-const ll blockSize = 700; // 300, 700
+inline int64_t hilbertOrder(int x, int y, int pow = 21, int rotate = 0) { // 2**pow là số lượng query sẽ xử lý
+    if (pow == 0) return 0;
+    int hpow = 1 << (pow-1);
+    int seg = (x < hpow) ? ((y < hpow) ? 0 : 3) : ((y < hpow) ? 1 : 2);
+    seg = (seg + rotate) & 3;
+    const int rotateDelta[4] = {3, 0, 0, 1};
+    int nx = x & (x ^ hpow), ny = y & (y ^ hpow);
+    int nrot = (rotate + rotateDelta[seg]) & 3;
+    int64_t subSquareSize = int64_t(1) << (2*pow - 2);
+    int64_t ans = seg * subSquareSize;
+    int64_t add = hilbertOrder(nx, ny, pow-1, nrot);
+    ans += (seg == 1 || seg == 2) ? add : (subSquareSize - add - 1);
+    return ans;
+}
 
 struct Query {
-    ll l, r, index;
-    friend bool operator<(Query a, Query b) {
-        if (a.l / blockSize != b.l / blockSize)
-            return a.l < b.l;
-        return (a.l / blockSize & 1) ? (a.r < b.r) : (a.r > b.r);
+    int l, r, index;
+    ll ord = -1;
+    friend bool operator<(Query& a, Query& b) {
+        return a.ord < b.ord;
     }
     friend std::ostream& operator<<(std::ostream& os, const Query &s) { return os << destructure(s);}
 };
+
 struct Ans {
     ll index, val;
     friend bool operator<(Ans a, Ans b) {
@@ -109,20 +122,20 @@ private:
         return eulertour;
     }
     // Chuyển query trên node sang query trên euler tour
-    vector<Query> fromEdgeToEuler(vector<Query> queries) {
-        vector<Query> res;
-        for (auto q: queries) {
-            ll u = q.l, v= q.r, idx = q.index;
+    void transformFromEdgeToEuler(vector<Query>& queries) {
+        for (auto& q: queries) {
+            ll u = q.l, v= q.r;
             if (first[u] > first[v]) swap(u, v); 
             if (lca.lca(u, v) == u) {
                 // first(u) -> first(v) (má trái)
-                res.push_back(Query{first[u], first[v], idx});
+                q.l = first[u];
+                q.r = first[v];
             } else {
                 // second(u) -> first(v)
-                res.push_back({second[u], first[v], idx});
+                q.l = second[u];
+                q.r = first[v];
             }
         }
-        return res;
     }
 public:
     ll n;
@@ -194,8 +207,9 @@ public:
         if (fw.sum(left) == left +1) return left+1;
         return left;        
     }
-    void solve(vector<Query> qrs) {
-        queries = fromEdgeToEuler(qrs);
+    void solve(vector<Query>& queries) {
+        transformFromEdgeToEuler(queries);
+        for (auto& q: queries) q.ord = hilbertOrder(q.l, q.r);
         sort(queries.begin(), queries.end());
         ll cur_l = 0, cur_r = -1;
         for (auto query: queries) {
