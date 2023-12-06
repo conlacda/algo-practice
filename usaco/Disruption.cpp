@@ -1,3 +1,4 @@
+// http://www.usaco.org/index.php?page=viewproblem2&cpid=842
 #include<bits/stdc++.h>
 
 typedef long long ll; // ld long double
