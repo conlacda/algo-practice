@@ -1,3 +1,4 @@
+// https://www.spoj.com/problems/LCA/
 #include<bits/stdc++.h>
 
 typedef long long ll; // ld long double
