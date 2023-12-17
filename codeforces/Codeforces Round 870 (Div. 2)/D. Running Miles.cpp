@@ -24,30 +24,31 @@ void solve() {
     /*
     a + b + c - (lc - la)
     = a + la + b + c - lc
-    = (a + la) + b + (c + sufc) - N
     => max
     Xet tung diem b -> (a+prefa) max la bao nhieu
-                    -> (c+prefc) max la bao nhieu
+                    -> (c - lc) max la bao nhieu
     */
     int ans = 0;
-    vector<int> pref(n), suf(n);
+    vector<int> pref_plus(n), pref_minus(n);
     for (int i=0;i<n;i++) {
-        pref[i] = a[i] + i;
-        suf[i] = a[i] + (n-1) - i;
+        pref_plus[i] = a[i] + i;
+        pref_minus[i] = a[i] - i;
     }
-    vector<int> max_pref(n), max_suf(n);
+    dbg(pref_plus, pref_minus);
+    vector<int> pref_max(n);
     int cur = 0;
     for (int i=0;i<n;i++) {
-        cur = max(pref[i], cur);
-        max_pref[i] = cur;
+        cur = max(cur, pref_plus[i]);
+        pref_max[i] = cur;
     }
-    cur = 0;
+    vector<int> suf_max(n);
+    cur = -INF;
     for (int i=n-1;i>=0;i--) {
-        cur = max(suf[i], cur);
-        max_suf[i] = cur;
+        cur = max(cur, pref_minus[i]);
+        suf_max[i] = cur;
     }
     for (int i=1;i<n-1;i++) {
-        ans = max(ans, max_pref[i-1] + a[i] + max_suf[i+1] - n + 1);
+        ans = max(ans, pref_max[i-1] + a[i] + suf_max[i+1]);
     }
     cout << ans <<"\n";
 }
