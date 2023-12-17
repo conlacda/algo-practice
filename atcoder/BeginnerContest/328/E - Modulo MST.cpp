@@ -55,27 +55,33 @@ struct Edge {
     friend std::ostream& operator<<(std::ostream& os, const Edge& s) { return os << destructure(s);}
 };
 
-template<typename T>
+template<typename T = int>
 struct Combination {
-    int n;
-    vector<bool> v;
-    vector<T> a;
+    vector<T> data;
+    vector<int> a;
+    int n, k;
     bool hasNext = true;
-    Combination(vector<T>& a, int k){
-        n = a.size();
-        v.resize(n);
-        assert(n >= k);
-        std::fill(v.end() - k, v.end(), true);
-        this->a = a;
+    Combination(vector<T>& data, int k) {
+        n = data.size();
+        a.resize(k);
+        std::iota(a.begin(), a.end(), 0);
+        this->data = data;
+        this->k = k;
     }
     vector<T> nextPermutation() {
+        // Get current combination
         vector<T> res;
-        for (int i = 0; i < n; ++i) {
-            if (v[i]) {
-                res.push_back(a[i]);
-            }
+        for (auto v: a) {
+            res.push_back(data[v]);
         }
-        hasNext = std::next_permutation(v.begin(), v.end());
+        // Prepare next permutation
+        if (*a.begin() == n-k) hasNext = false;
+        else {
+            std::vector<int>::iterator mt = a.end();
+            while (*(--mt) == n-(a.end()-mt));
+            (*mt)++;
+            while (++mt != a.end()) *mt = *(mt-1)+1;
+        }
         return res;
     }
 };
@@ -107,7 +113,8 @@ signed main(){
         }
         return true;
     };
-    Combination c(edges, n-1);
+    Combination<Edge> c(edges, n-1);
+    // dbg(c.comb);
     int ans = INF;
     while (c.hasNext) {
         auto comb = c.nextPermutation();
@@ -120,3 +127,16 @@ signed main(){
     cout << ans;
     show_exec_time();
 }
+/*
+Đọc chậm rãi
+Viết ra ý tưởng
+The pattern from simple input to output.
+
+TLE:
+    map vs unordered_map ??
+    int vs long long
+RE:
+    binary search - INF ??
+cout << std::fixed << setprecision(15);
+*/
+
