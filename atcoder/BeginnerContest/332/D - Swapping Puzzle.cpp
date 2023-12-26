@@ -16,7 +16,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-int inverse(vector<int> a) {
+int inversion(vector<int> a) {
     int res = 0;
     int n = a.size();
     for (int i=0;i<n-1;i++) {
@@ -57,10 +57,20 @@ signed main(){
             }
             if (match) {
                 // calculate
-                ans = min(ans, inverse(row) + inverse(col));
+                ans = min(ans, inversion(row) + inversion(col));
             }
         } while (std::next_permutation(row.begin(), row.end()));
     } while (std::next_permutation(col.begin(), col.end()));
     cout << ((ans == INF) ? -1 : ans);
     show_exec_time();
 }
+/*
+Cách giải:
+Số cột, hàng là 2 vector 1...N và 1...M
+Xét tất cả các hoán vị của cột, hàng rồi so sánh xem sau khi di chuyển cột và hàng của b như thế có ra được matrix a ban đầu không (if (b[row[i]][col[j]] != a[i][j]) match = false;)
+Nếu match thì thành ra cho mảng {1, 2, 3, 4, 5} và 1 hoán vị {3, 2, 4, 5, 1}.
+Cần swap bao nhiêu lần thì mảng hoán vị sẽ thành ra mảng ban đầu
+=> Inversion() của vector.
+Kết quả sẽ là 2 inversion() cộng với nhau
+Nếu không match được thì kết quả là -1
+*/
