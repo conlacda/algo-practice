@@ -1,4 +1,4 @@
-// [Atcoder|Codeforces].abcxxx.F
+// https://www.spoj.com/problems/EC_P/
 #include<bits/stdc++.h>
 
 #define int long long // __int128
