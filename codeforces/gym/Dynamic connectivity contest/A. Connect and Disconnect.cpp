@@ -58,19 +58,11 @@ struct Event {
 
 struct Node {
     vector<Edge> edges; // lưu các node tồn tại tại thời điểm này
+    int event_type = 0;
     bool is_null = true;
-    friend Node operator+(Node a, Node b) {
-        if (a.is_null) return b;
-        if (b.is_null) return a;
-        return Node {
-            {},
-            false
-        };
-    }
     static Node v() { // ***
-        return Node{{}, false}; // ***
+        return Node{.is_null = false}; // ***
     } // ***
-    Node operator!() { return *this; }
 
     friend std::ostream& operator<<(std::ostream& os, const Node s) { return os << destructure(s);}
 };
@@ -83,13 +75,14 @@ struct Node {
  3   4 5   6
 */
 struct SegmentTree {
-    int n;
+    int realN, n; // realN: kích thước ban đầu của mảng, n là kích thước làm tròn tới pow(2)
     vector<Node> dat;
     SegmentTree() {}
     SegmentTree(vector<Node>& v){ build(v);}
     void build(vector<Node>& v) {
         for (auto &node: v) assert(!node.is_null);
-        n = 1; while (n < (int) v.size()) n *= 2;
+        realN = (int) v.size();
+        n = 1; while (n < realN) n *= 2;
         dat.resize(2 * n - 1);
         for (int i=0;i<(int) v.size();i++) dat[n + i - 1] = v[i];
     }
@@ -150,6 +143,8 @@ struct SegmentTree {
         int inf = (int) events.size() - 1;
         for (auto [edge, start_time]: startTime)
             add(start_time, inf, edge);
+        // Them event_type vào trong baseNode để duyệt ở dfs() thì in ra luôn
+        for (int i=0;i<realN;i++) dat[n + i - 1].event_type = events[i].type;
     }
 };
 
@@ -198,7 +193,6 @@ signed main(){
 
     DSU dsu(n);
     int ccnum = n;
-    int event_stt = -1;
     std::function<void(int)> dfs = [&](int u) {
         int merge_num = 0;
         for (auto edge: seg.dat[u].edges) {
@@ -208,11 +202,9 @@ signed main(){
                 ccnum--;
             }
         }
-        if (seg.isBaseNode(u)) { // base node
-            event_stt++;
-            if (events[event_stt].type == 0) {
-                cout << ccnum << '\n';
-            }
+        if (seg.isBaseNode(u) && seg.dat[u].event_type == 0) { // base node
+            dbg(u);
+            cout << ccnum << '\n';
         }
         for (auto child: seg.children(u)) dfs(child);
         for (int i=0;i<merge_num;i++) {
@@ -223,11 +215,3 @@ signed main(){
     dfs(0);
     show_exec_time();
 }
-/*
-Reference: https://youtu.be/7gqFcunrFH0?t=928
-3 4
-?
-+ 1 2
-+ 2 3
-?
-*/
