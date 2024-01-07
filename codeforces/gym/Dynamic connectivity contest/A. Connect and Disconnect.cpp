@@ -58,7 +58,7 @@ struct Event {
 
 struct Node {
     vector<Edge> edges; // lưu các node tồn tại tại thời điểm này
-    int event_type = 0;
+    int event_type = 0; // baseNode sẽ lưu thêm event_type để trả về kết quả cho query
     bool is_null = true;
     static Node v() { // ***
         return Node{.is_null = false}; // ***
@@ -134,7 +134,6 @@ struct SegmentTree {
             if (events[i].type == 1) { // add
                 startTime[edge] = i;
             } else if (events[i].type == -1) { // remove
-                assert(startTime.find(edge) != startTime.end());
                 add(startTime[edge], i, edge);
                 startTime.erase(edge);
             }
@@ -147,8 +146,6 @@ struct SegmentTree {
         for (int i=0;i<realN;i++) dat[n + i - 1].event_type = events[i].type;
     }
 };
-
-
 
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
