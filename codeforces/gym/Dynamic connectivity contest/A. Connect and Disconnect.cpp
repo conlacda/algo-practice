@@ -134,6 +134,7 @@ struct SegmentTree {
             if (events[i].type == 1) { // add
                 startTime[edge] = i;
             } else if (events[i].type == -1) { // remove
+                assert(startTime.find(edge) != startTime.end()); // chắc chắn rằng cạnh này có rồi mới xóa đi được. Lưu ý thứ tự Edge(u, v) thì u<v
                 add(startTime[edge], i, edge);
                 startTime.erase(edge);
             }
