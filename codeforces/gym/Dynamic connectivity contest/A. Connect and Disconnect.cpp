@@ -12,50 +12,59 @@ using namespace std;
 #endif
 
 struct DSU {
-    vector<int> parent, size;
-    // stores info from the past
-    vector<pair<int, int>> past_parent, past_size;
+    int ccnum; // connected component num
+    vector<int> rank, parent, siz;
+    stack<tuple<int, int, int, int>> op; //a, b, rankA, rankB
+
+    DSU() {}
     DSU(int n) {
+        ccnum = n;
+        rank.resize(n);
         parent.resize(n);
-        size.resize(n, 1);
         iota(parent.begin(), parent.end(), 0);
     }
 
-    int find(int x) { return (parent[x] == x) ? x : find(parent[x]); }
+    int find(int v) {
+        return (v == parent[v] ? v : find(parent[v]));
+    }
 
     void merge(int a, int b) {
         a = find(a);
         b = find(b);
-        if (size[a] < size[b]) { swap(a, b); }
-        // add to history
-        past_parent.push_back({b, parent[b]});
-        past_size.push_back({a, parent[a]});
+        if (a == b) return;
 
-        if (a != b) {
-            parent[b] = a;
-            size[a] += size[b];
-        }
+        if (rank[a] < rank[b]) swap(a, b);
+        op.push(make_tuple(a, b, rank[a], rank[b]));
+
+        ccnum--;
+        parent[b] = a;
+        rank[a] += rank[a] == rank[b];
     }
 
     bool isSame(int a, int b) { return find(a) == find(b); }
 
-    // Reverts to previous DSU state.
     void rollback() {
-        parent[past_parent.back().first] = past_parent.back().second;
-        size[past_size.back().first] = past_size.back().second;
-        past_parent.pop_back();
-        past_size.pop_back();
+        if (op.empty()) return;
+
+        auto [a, b, rankA, rankB] = op.top();
+        op.pop();
+
+        ccnum++;
+        parent[a] = a;
+        parent[b] = b;
+        rank[a] = rankA;
+        rank[b] = rankB;
     }
 };
 
 typedef pair<int,int> Edge;
 
 struct Event {
-    int type;
-    Edge edge;
+    int type; // add, remove
+    Edge edge; // cạnh được thêm/xóa khỏi graph
     static const int ADD = 1;
-    static const int REMOVE = -1;
-    static const int QUERY = 0; // not used
+    static const int REMOVE = 0;
+    static const int QUERY = 2; // not used
     friend std::ostream& operator<<(std::ostream& os, const Event s) { return os << destructure(s);}
 };
 
@@ -63,9 +72,6 @@ struct Node {
     vector<Edge> edges; // lưu các node tồn tại tại thời điểm này
     int event_type = 0; // baseNode sẽ lưu thêm event_type để trả về kết quả cho query
     bool is_null = true;
-    static Node v() { // ***
-        return Node{.is_null = false}; // ***
-    } // ***
 
     friend std::ostream& operator<<(std::ostream& os, const Node s) { return os << destructure(s);}
 };
@@ -94,9 +100,8 @@ struct SegmentTree {
         if (edge.first > edge.second) swap(edge.first, edge.second);
         // Lấy ra mọi node có liên quan rồi đẩy dữ liệu vào đây
         auto nodeIds = query(start_time, end_time);
-        for (auto nodeId: nodeIds) {
+        for (auto nodeId: nodeIds) 
             dat[nodeId].edges.push_back(edge);
-        }
     }
     // tra ve id cua cac node co lien quan
     vector<int> query(int l, int r){
@@ -135,29 +140,23 @@ struct SegmentTree {
     /*
     Chuyển event thành timeline rồi thêm vào trên cây.
     */
-    void addEvents(vector<Event>& events) {
+    void addEvents(vector<vector<Event>>& events) {
         map<Edge, int> startTime;
-        for (int i=0;i<(int) events.size();i++) {
-            auto event = events[i];
-            if (event.type == Event::ADD) { // add
-                startTime[event.edge] = i;
-            } else if (event.type == Event::REMOVE) { // remove
-                // remove cạnh tức là cạnh này chỉ tồn tại tới thời điểm i hiện tại
-                addEdge(event.edge, startTime[event.edge], i-1);
-                startTime.erase(event.edge);
+        for (int time=0;time<(int) events.size();time++) { // xét toàn bộ sự kiện của từng thời điểm
+            for (auto event: events[time]) {
+                if (event.type == Event::ADD) { // add
+                    startTime[event.edge] = time;
+                } else if (event.type == Event::REMOVE) { // remove
+                    // remove cạnh tức là cạnh này chỉ tồn tại tới thời điểm i hiện tại
+                    addEdge(event.edge, startTime[event.edge], time-1);
+                    startTime.erase(event.edge);
+                }
             }
         }
         // những cạnh được thêm vào nhưng không bao giờ xóa đi -> tồn tại từ lúc thêm vào -> inf
         int inf = (int) events.size() - 1;
         for (auto [edge, start_time]: startTime)
             addEdge(edge, start_time, inf);
-    }
-    void setEventToBaseNode(vector<Event>& events) {
-        // Them event_type vào trong baseNode để duyệt ở dfs() thì in ra luôn
-        for (int i=0;i<realN;i++) {
-            Node& node = getBaseNode(i);
-            node.event_type = events[i].type;
-        }
     }
 };
 
@@ -170,46 +169,37 @@ signed main(){
         freopen("connect.in", "r", stdin);
         freopen("connect.out", "w", stdout);
     #endif
-    /*
-    Dung segment tree co san
-    -> Query tra ve danh sach cac node lien quan
-    -> Clear cac node cam thua du lieu -> node cha co roi thi xoa du lieu tai node con
-    */
     int n, q;
     cin >> n >> q;
-    // Read input
-    vector<Event> events;
+    // Read input - tại đây tạo ra vector<vector<Event>> events và queryIndexes
+    vector<vector<Event>> events;
     // Sự kiện khởi tạo - đẩy tất cả các cạnh đã có của đồ thị vào
-    events.push_back({Event::ADD, Edge{0, 0}});
+    events.push_back({}); // do không có gì nên sẽ để trống
 
-    vector<int> queryEventIndexes;
+    vector<int> queryIndexes; // lưu lại các index cần lấy ra kết quả. index i thể hiện kết quả được in ra sau sự kiện add/remove thứ i
     int curIndex = 0;
     for (int i=0;i<q;i++) {
         char type;
         cin >> type;
         if (type == '?') {
-            queryEventIndexes.push_back(curIndex);
+            queryIndexes.push_back(curIndex);
             continue;
         }
+        int u, v; cin >> u >> v; u--; v--;
+        if (u > v) swap(u, v);
         curIndex++;
         if (type == '+') {
-            int u, v;
-            cin >> u >> v;
-            if (u > v) swap(u, v);
-            events.push_back(Event{1, Edge{--u, --v}});
-        } else if (type == '-') {
-            int u, v;
-            cin >> u >> v;
-            if (u > v) swap(u, v);
-            events.push_back(Event{-1, Edge{--u, --v}});
+            vector<Event> addEvents {Event{Event::ADD, Edge{u, v}}};
+            events.push_back(addEvents);
+        } else {
+            // type == '-'
+            vector<Event> removeEvents {Event{Event::REMOVE, Edge{u, v}}};
+            events.push_back(removeEvents);
         }
     }
-    dbg(events);
-    dbg(queryEventIndexes);
-    vector<Node> a(events.size(), Node::v());
+    vector<Node> a(events.size(), Node{.is_null = false});
     SegmentTree seg(a);
     seg.addEvents(events);
-    seg.setEventToBaseNode(events);
 
     DSU dsu(n);
     int ccnum = n;
@@ -228,7 +218,8 @@ signed main(){
         for (auto child: seg.children(u)) dfs(child);
         // tới baseNode là tầng cuối cùng, nếu event_type là query thì in ra kết quả
         if (seg.isBaseNode(u)) { // base node
-            res.push_back(ccnum);
+            res.push_back(ccnum); // lấy ra kết quả ngay sau khi sự kiện xảy ra.
+            // Sau đó có queryIndexes lọc ra các kết quả cần lấy 
         }
         // Duyệt xong toàn bộ con thì quay lại xóa các node đã được thêm vào
         for (int i=0;i<merge_num;i++) {
@@ -237,29 +228,19 @@ signed main(){
         }
     };
     dfs(0);
-    for (auto index: queryEventIndexes) {
+    for (auto index: queryIndexes) {
         cout << res[index] << '\n';
     }
     show_exec_time();
 }
+
 /*
-Phần xử lý tại đây:
-* Hiện tại chỉ có add/remove được đưa vào trong segmenttree
-* res[] sẽ lưu kết quả sau mỗi event
-* queryEventIndexes sẽ lưu index của ? query. Do phần res[] lưu toàn bộ kết quả query. Nhưng đề bài chỉ yêu cầu query sau những event cụ thể
-* Event khởi tạo được đưa lên đầu của mọi event. Khi này dù dấu ? xuất hiện ở đầu tiên thì vẫn có thể in ra mà ko cần xử lý riêng.
-   ?
-   +
-   ?
-   -
-   ?
-   Ở trường hợp này nếu ko có sự kiện init ở trên đầu thì sẽ chỉ có ? ở thứ 2, 3 được in ra
-   Còn ? thứ 1 phải if else nhưng
-   init
-   ?
-   +
-   ?
-   -
-   ?
-   thì mọi dấu ? đều được xử lý như nhau
+=> Bài này thực sự rất khó để gói nó vào template.
+Hoặc gói xong nó sẽ khó maintain quá mức nên tạm thời để dạng dở dang.
+Rồi viết lại cấu trúc các phần để gặp bài cụ thể sử dụng theo form.
+
+Ví dụ:
+Tại đây hỏi ccnum cần dùng DSU. Nhưng bài khác hỏi về giá trị khác thì DSU lại ko cần.
+Rồi lại phải ném 1 cấu trúc khác vào trong segment tree. Như thế còn khó maintain hơn để ở main
+vì các biến bị giới hạn trong class, còn để ở main thì ko cần lo scope, cứ thế sử dụng kết hợp mọi biến
 */
