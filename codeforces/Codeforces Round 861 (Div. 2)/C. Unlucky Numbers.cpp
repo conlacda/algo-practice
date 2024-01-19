@@ -25,6 +25,12 @@ auto _vector(size_t n, Args&&... args) {
         return vector(n, _vector(args...));
 }
 
+#define init(cur) \
+if (mind <= digit && digit <= maxd) { \
+    cnt[0][cur] = 1; \
+    num[0][cur][0] = char(digit + '0'); \
+} \
+
 #define transition(cur, prev) \
 if (mind <= digit && digit <= maxd && cnt[index-1][prev] != 0) { \
     cnt[index][cur] += cnt[index-1][prev];\
@@ -44,28 +50,18 @@ string digitDPSameDigit(string low, string up, int mind, int maxd) {
     vector<vector<string>> num(n, vector<string>(4, string(n, ' ')));
     if (up[0] == low[0]) {
         int digit = up[0] - '0';
-        if (mind <= digit && digit <= maxd) {
-            cnt[0][CONSTR::both] = 1; // ***
-            num[0][CONSTR::both][0] = char(digit + '0');
-        }
+        init(CONSTR::both);
     } else {
         int digit = low[0] - '0';
-        if (mind <= digit && digit <= maxd) {
-            cnt[0][CONSTR::low] = 1; // 1234 & 3456 => 1xxx // ***
-            num[0][CONSTR::low][0] = char(digit + '0');
-        }
+        init(CONSTR::low);
+
         for (int digit=low[0]-'0'+1;digit<=up[0]-'0'-1;digit++) {
-            if (mind <= digit && digit <= maxd) {
-                cnt[0][CONSTR::none] += 1; // ***
-                num[0][CONSTR::none][0] = char(digit + '0');
-            }
+            init(CONSTR::none);
         }
         digit = up[0] - '0';
-        if (mind <= digit && digit <= maxd) {
-            cnt[0][CONSTR::up] = 1; // ***
-            num[0][CONSTR::up][0] = char(digit + '0');
-        }
+        init(CONSTR::up);
     }
+    
     // Tính toán các chữ số đằng sau
     for (int index=1;index<n;index++) {
         // none -> none. Chữ số trước ko constraint thì toàn bộ chữ số sau cũng ko constraint
