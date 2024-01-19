@@ -17,6 +17,22 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
+template<class... Args>
+auto _vector(size_t n, Args&&... args) {
+    if constexpr(sizeof...(args) == 1)
+        return vector(n, args...);
+    else
+        return vector(n, _vector(args...));
+}
+
+#define transition(cur, prev) \
+if (mind <= digit && digit <= maxd && cnt[index-1][prev] != 0) { \
+    cnt[index][cur] += cnt[index-1][prev];\
+    num[index][cur] = num[index-1][prev];\
+    num[index][cur][index] = char(digit + '0');\
+}\
+
+
 enum CONSTR { none, low, up, both };
 
 // pair<count, match number>
@@ -24,8 +40,7 @@ string digitDPSameDigit(string low, string up, int mind, int maxd) {
     assert(low.size() == up.size() && "Chia làm các khoảng có số chữ số bằng nhau");
     int n = (int) up.size();
     // Initial state
-    vector<vector<int>> cnt(n, vector<int>(4, 0)); // cnt[index][constraint]
-    // res[index][constraint] = ""
+    auto cnt = _vector(n, 4, (int) 0); // cnt[index][constraint]
     vector<vector<string>> num(n, vector<string>(4, string(n, ' ')));
     if (up[0] == low[0]) {
         int digit = up[0] - '0';
@@ -55,73 +70,39 @@ string digitDPSameDigit(string low, string up, int mind, int maxd) {
     for (int index=1;index<n;index++) {
         // none -> none. Chữ số trước ko constraint thì toàn bộ chữ số sau cũng ko constraint
         for (int digit=0;digit<10;digit++) {
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::none] != 0) {
-                cnt[index][CONSTR::none] += cnt[index-1][CONSTR::none]; // ***
-                num[index][CONSTR::none] = num[index-1][CONSTR::none]; // ***
-                num[index][CONSTR::none][index] = char(digit + '0');
-            }
+            transition(CONSTR::none, CONSTR::none);
         }
         // up -> none
         for (int digit=0;digit<up[index]-'0';digit++) {
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::up] != 0) {
-                cnt[index][CONSTR::none] += cnt[index-1][CONSTR::up]; // ***
-                num[index][CONSTR::none] = num[index-1][CONSTR::up]; // ***
-                num[index][CONSTR::none][index] = char(digit + '0');
-            }
+            transition(CONSTR::none, CONSTR::up);
         }
         // up -> up
         int digit = up[index] - '0';
         if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::up] != 0) {
-            cnt[index][CONSTR::up] += cnt[index-1][CONSTR::up]; // ***
-            num[index][CONSTR::up] = num[index-1][CONSTR::up]; // ***
-            num[index][CONSTR::up][index] = char(digit + '0');
+            transition(CONSTR::up, CONSTR::up);
         }
         // low -> none
         for (int digit=low[index]-'0'+1;digit<=9;digit++) {
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::low] != 0) {
-                cnt[index][CONSTR::none] += cnt[index-1][CONSTR::low]; // ***
-                num[index][CONSTR::none] = num[index-1][CONSTR::low]; // ***
-                num[index][CONSTR::none][index] = char(digit + '0');
-            }
+            transition(CONSTR::none, CONSTR::low);
         }
         // low -> low
         digit = low[index] - '0';
-        if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::low] != 0) {
-            cnt[index][CONSTR::low] += cnt[index-1][CONSTR::low]; // ***
-            num[index][CONSTR::low] = num[index-1][CONSTR::low]; // ***
-            num[index][CONSTR::low][index] = char(digit + '0');
-        }
+        transition(CONSTR::low, CONSTR::low);
         // both -> both
         if (up[index] == low[index]) {
             digit = low[index] - '0';
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::both] != 0) {
-                cnt[index][CONSTR::both] += cnt[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::both] = num[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::both][index] = char(digit + '0');
-            }
+            transition(CONSTR::both, CONSTR::both);
         }
         else {
             // both -> low
             digit = low[index] - '0';
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::both] != 0) {
-                cnt[index][CONSTR::low] += cnt[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::low] = num[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::low][index] = char(digit + '0');
-            }
+            transition(CONSTR::low, CONSTR::both);
             // both -> up
             digit = up[index] - '0';
-            if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::both] != 0) {
-                cnt[index][CONSTR::up] += cnt[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::up] = num[index-1][CONSTR::both]; // ***
-                num[index][CONSTR::up][index] = char(digit + '0');
-            }
+            transition(CONSTR::up, CONSTR::both);
             // both -> none
             for (int digit=low[index]-'0'+1;digit<up[index]-'0';digit++) {
-                if (mind <= digit && digit <= maxd && cnt[index-1][CONSTR::both] != 0) {
-                    cnt[index][CONSTR::none] += cnt[index-1][CONSTR::both]; // ***
-                    num[index][CONSTR::none] = num[index-1][CONSTR::both]; // ***
-                    num[index][CONSTR::none][index] = char(digit + '0');
-                }
+                transition(CONSTR::none, CONSTR::both);
             }
         }
     }
