@@ -1,11 +1,8 @@
 // https://codeforces.com/gym/100886/problem/G
 #include<bits/stdc++.h>
 
-typedef long long ll;
-using uint = unsigned int;
-using ull = unsigned long long;
+typedef long long ll; // ld long double
 const ll mod = 1000000007; // 998244353  1000000009  1000000007 // đừng dùng ull
-#define ld long double
 #define int long long // __int128
 const int INF = std::numeric_limits<int>::max(); // use INT32_MAX for i32
 
@@ -19,42 +16,49 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-bool smax(int& x, int y) {
-    if (x <= y) {
-        x = y;
-        return true;
-    }
-    return false;
-}
-string finalStr = "";
-int finalAns = -1;
-// digitDP[index][digit][constraint] constraint: 0/1/2/3 => ko/low/up/low&up constraint
-int digitDPSameDigit(int l, int r) { // l = 0234, r = 3211
-    dbg(l, r);
-    string up = to_string(r), low = to_string(l);
+enum CONSTR { none, low, up, both };
+
+#define init(cur) \
+{ \
+    cnt[0][cur] += 1;\
+    if (prod[0][cur] < digit) \
+    { \
+        prod[0][cur] = digit; \
+        num[0][cur][0] = char(digit + '0'); \
+    } \
+} \
+
+
+#define transition(cur, prev) \
+if (cnt[index-1][prev] != 0) {\
+    cnt[index][cur] += cnt[index-1][prev]; \
+    if (prod[index][cur] < prod[index-1][prev] * digit) \
+    { \
+        prod[index][cur] = prod[index-1][prev] * digit; \
+        num[index][cur] = num[index-1][prev]; \
+        num[index][cur][index] = char(digit + '0'); \
+    } \
+}\
+
+// digitDP[index][constraint]
+pair<string, int> digitDPSameDigit(string low, string up) {
     assert(low.size() == up.size() && "Chia làm các khoảng có số chữ số bằng nhau");
     int n = (int) up.size();
     // Initial state
-    // dp[index][digit][constraint_0/1/2/3]
-    vector<vector<vector<int>>> dp(n, vector<vector<int>>(10, vector<int>(4, 0)));
-    vector<vector<vector<int>>> prod(n, vector<vector<int>>(10, vector<int>(4, -1)));
-    vector<vector<vector<string>>> num(n, vector<vector<string>>(10, vector<string>(4, "")));
+    vector<vector<int>> cnt(n, vector<int>(4, 0)); // cnt[index][constraint]
+    vector<vector<int>> prod(n, vector<int>(4, 0)); // cnt[index][constraint]
+    vector<vector<string>> num(n, vector<string>(4, string(n, ' ')));
     if (up[0] == low[0]) {
-        dp[0][up[0] - '0'][3] = 1; // 1234 & 1567 => 1xxx
-        prod[0][up[0] - '0'][3] = up[0] - '0'; // 1234 & 1567 => 1xxx
-        num[0][up[0] - '0'][3] += up[0]; // 1234 & 1567 => 1xxx
+        int digit = up[0] - '0';
+        init(CONSTR::both);
     } else {
-        dp[0][low[0] - '0'][1] = 1; // 1234 & 3456 => 1xxx
-        prod[0][low[0] - '0'][1] = low[0] - '0'; // 1234 & 3456 => 1xxx
-        num[0][low[0] - '0'][1] += low[0]; // 1234 & 3456 => 1xxx
-        for (int first_digit=low[0]-'0'+1;first_digit<=up[0]-'0'-1;first_digit++) {
-            dp[0][first_digit][0] = 1; // 2xxx
-            prod[0][first_digit][0] = first_digit; // 2xxx
-            num[0][first_digit][0] += char(first_digit + '0'); // 2xxx
+        int digit = low[0] - '0';
+        init(CONSTR::low); // 1234 & 3456 => 1xxx
+        for (int digit=low[0]-'0'+1;digit<=up[0]-'0'-1;digit++) {
+            init(CONSTR::none);
         }
-        dp[0][up[0] - '0'][2] = 1; // 3xxx
-        prod[0][up[0] - '0'][2] = up[0] - '0'; // 3xxx
-        num[0][up[0] - '0'][2] += up[0]; // 3xxx
+        digit = up[0] - '0';
+        init(CONSTR::up);
     }
     /*
     Không constraint => không constraint
@@ -69,109 +73,92 @@ int digitDPSameDigit(int l, int r) { // l = 0234, r = 3211
     */
     // Tính toán các chữ số đằng sau
     for (int index=1;index<n;index++) {
+        // none -> none. Chữ số trước ko constraint thì toàn bộ chữ số sau cũng ko constraint
         for (int digit=0;digit<10;digit++) {
-            // Không constraint => không constraint
-            for (int p=0;p<10;p++) {
-                dp[index][digit][0] += dp[index-1][p][0];
-                if (smax(prod[index][digit][0], prod[index-1][p][0] * digit)) {
-                    num[index][digit][0] = num[index-1][p][0] + char(digit + '0');
-                }
-            }
-            // Constraint trên => ko constraint
-            if (digit < up[index] - '0') {
-                dp[index][digit][0] += dp[index-1][up[index-1] - '0'][2];
-                if (smax(prod[index][digit][0], prod[index-1][up[index-1] - '0'][2] * digit)) {
-                   num[index][digit][0] = num[index-1][up[index-1] - '0'][2] + char(digit + '0');
-                }
-            }
-            // Constraint trên => tiếp tục constraint
-            if (digit == up[index] - '0') {
-                dp[index][digit][2] += dp[index-1][up[index-1] - '0'][2];
-                if (smax(prod[index][digit][2], prod[index-1][up[index-1] - '0'][2] * digit)) {
-                   num[index][digit][2] = num[index-1][up[index-1] - '0'][2] + char(digit + '0');  
-                }
-            }
-            // Constraint dưới => ko constraint
-            if (digit > low[index] - '0') {
-                dp[index][digit][0] += dp[index-1][low[index-1] - '0'][1];
-                if (smax(prod[index][digit][0], prod[index-1][low[index-1] - '0'][1] * digit)) {
-                    num[index][digit][0] = num[index-1][low[index-1] - '0'][1] + char(digit + '0');
-                }
-            }
-            // Constraint dưới => constraint dưới tiếp
-            if (digit == low[index] - '0') {
-                dp[index][digit][1] += dp[index-1][low[index-1] - '0'][1];
-                if (smax(prod[index][digit][1], prod[index-1][low[index-1] - '0'][1] * digit)) {
-                    num[index][digit][1] = num[index-1][low[index-1] - '0'][1] + char(digit + '0');
-                }
-            }
-            // Constraint 2 chiều => ko constraint
-            if (up[index-1] != low[index-1]) continue; // trước đó ko có constraint 2 chiều nữa
-            int prevdigit = up[index-1] - '0';
-            // Constraint 2 chiều hay constraint 1 chiều
-            if (up[index] == low[index]) {
-                // Constraint 2 chiều tiếp
-                if (digit == up[index] - '0') {
-                    dp[index][digit][3] += dp[index-1][prevdigit][3];
-                    if (smax(prod[index][digit][3], prod[index-1][prevdigit][3] * digit)) {
-                        num[index][digit][3] = num[index-1][prevdigit][3] + char(digit + '0');
-                    }
-                }
-            } else {
-                // constraint dưới
-                if (digit == low[index] - '0') {
-                    dp[index][digit][1] += dp[index-1][prevdigit][3];
-                    if (smax(prod[index][digit][1], prod[index-1][prevdigit][3] * digit)) {
-                        num[index][digit][1] = num[index-1][prevdigit][3] + char(digit + '0');
-                    }
-                }
-                // không constraint nữa
-                if (low[index] - '0' < digit && digit < up[index] - '0') {
-                    dp[index][digit][0] += dp[index-1][prevdigit][3];
-                    if (smax(prod[index][digit][0], prod[index-1][prevdigit][3] * digit)) {
-                        num[index][digit][0] = num[index-1][prevdigit][3] + char(digit + '0');
-                    }
-                }
-                // constraint trên
-                if (digit == up[index] - '0') {
-                    dp[index][digit][2] += dp[index-1][prevdigit][3];
-                    if (smax(prod[index][digit][2], prod[index-1][prevdigit][3] * digit)) {
-                        num[index][digit][2] = num[index-1][prevdigit][3] + char(digit + '0');
-                    }
-                }
+            transition(CONSTR::none, CONSTR::none);
+        }
+        // up -> none
+        for (int digit=0;digit<up[index]-'0';digit++) {
+            transition(CONSTR::none, CONSTR::up);
+        }
+        // up -> up
+        int digit = up[index] - '0';
+        transition(CONSTR::up, CONSTR::up);
+        // low -> none
+        for (int digit=low[index]-'0'+1;digit<=9;digit++) {
+            transition(CONSTR::none, CONSTR::low);
+        }
+        // low -> low
+        digit = low[index] - '0';
+        transition(CONSTR::low, CONSTR::low);
+        // both -> both
+        if (up[index] == low[index]) {
+            digit = low[index] - '0';
+            transition(CONSTR::both, CONSTR::both);
+        }
+        else {
+            // both -> low
+            digit = low[index] - '0';
+            transition(CONSTR::low, CONSTR::both);
+            // both -> up
+            digit = up[index] - '0';
+            transition(CONSTR::up, CONSTR::both);
+            // both -> none
+            for (int digit=low[index]-'0'+1;digit<up[index]-'0';digit++) {
+                transition(CONSTR::none, CONSTR::both);
             }
         }
     }
 
-    // cout << ans; // dp[n-1][0:9][0/1/2/3];
-    int ans = -1;
+    // cout << ans; // cnt[n-1][0/1/2/3]
+    int max_prod = 0;
     string number = "";
-    for (int digit=0;digit<=9;digit++) {
-        if (smax(ans, prod[n-1][digit][0]) && (int) num[n-1][digit][0].size() == n) number = num[n-1][digit][0];
-        if (smax(ans, prod[n-1][digit][1]) && (int) num[n-1][digit][1].size() == n) number = num[n-1][digit][1];
-        if (smax(ans, prod[n-1][digit][2]) && (int) num[n-1][digit][2].size() == n) number = num[n-1][digit][2];
-        if (smax(ans, prod[n-1][digit][3]) && (int) num[n-1][digit][3].size() == n) number = num[n-1][digit][3];
+    for (int i=0;i<3;i++) {
+        if (cnt[n-1][i] != 0) {
+            if (prod[n-1][i] > max_prod) {
+                max_prod = prod[n-1][i];
+                number = num[n-1][i];
+            }
+        }
     }
-    if (smax(finalAns, ans)) {
-        finalStr = number;
-    }
-    return ans;
+    return make_pair(number, max_prod);
 }
 
-int digitDP(int l, int r) {
-    int ans = 0;
-    string ls = to_string(l), rs = to_string(r);
-    if ((int) ls.size() == (int) rs.size()) ans += digitDPSameDigit(l, r);
-    else {
-        ans += digitDPSameDigit(l, (int) pow(10, ls.size()) - 1);
-        for (int i=(int) ls.size()+1;i<(int) rs.size();i++) {
-            ans += digitDPSameDigit((int) pow(10, i-1) , (int) pow(10, i)-1);
+string digitDP(string l, string r) {
+    std::function<string(int)> full9 = [&](int num_digit){ return string(num_digit, '9');};
+    std::function<string(int)> full0 = [&](int num_digit){ return '1' + string(num_digit-1, '0'); };
+    
+    int cur_max = 0;
+    string cur_str = l;
+    for (int i=(int)l.size();i<=(int)r.size();i++) {
+        string ll = (i > (int) l.size()) ? full0(i) : l;
+        string rr = (i < (int) r.size()) ? full9(i) : r;
+        auto [number, max_prod] = digitDPSameDigit(ll, rr);
+        if (max_prod >  cur_max) {
+            cur_max = max_prod;
+            cur_str = number;
         }
-        ans += digitDPSameDigit((int) pow(10, (int) rs.size() -1), r);
     }
-    return ans;
+
+    return cur_str;
 }
+
+string digitDP(int l, int r) { return digitDP(to_string(l), to_string(r)); }
 /** Comment xem tại github */
+/**
+ * Phần này chia [l:r] thành các đoạn có cùng số digit.
+ * Ví dụ: [12:4321] = [12:99] + [100:999] + [1000:4321]
+ * Đếm đoạn to bằng việc đếm các đoạn nhỏ hơn có cùng độ dài digit
+ * Khi này ko cần leading_zero
+ * dp[index][digit][constraint]
+ * index là index tại số đang xét (giống các bài khác) l = 123 => l[0] = 1, l[1] = 2, l[2] = 3
+ * digit: digit điền vào cho index đang xét
+ * constraint: có 4 loại
+ *     * 0: không constraint. [123:256] => 2xx
+ *     * 1: constraint cho phần bên dưới. [123:256] => 1xx
+ *     * 2: constraint cho phần trên. [123:256] => 2xx
+ *     * 3: constraint cho cả low/up. [523:576] => 5xx. low[index] = up[index] = 5 -> số 5 vừa constraint dưới, vừa constraint trên
+*/
 
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
@@ -179,17 +166,13 @@ signed main(){
         freopen("inp.txt", "r", stdin);
         freopen("out.txt", "w", stdout);
     #endif
-    cout << std::fixed << setprecision(15);
-    int l, r;
+    string l, r;
     cin >> l >> r;
-    digitDP(l, r);
     /*
-    Tìm ra số có tích các chữ số lớn nhất
-    => tách thành các đoạn -> tìm từng đoạn 1.
-
+    dp[index][constraint][product]
     */
-    cout << finalStr;
-    
+    cout << digitDP(l, r);
+
     show_exec_time();
 }
 /*
@@ -202,4 +185,6 @@ TLE:
     int vs long long
 RE:
     binary search - INF ??
+friend std::ostream& operator<<(std::ostream& os, const S s) { return os << destructure(s);}
+cout << std::fixed << setprecision(15);
 */
