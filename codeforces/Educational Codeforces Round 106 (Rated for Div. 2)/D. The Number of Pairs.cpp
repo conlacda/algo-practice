@@ -1,3 +1,4 @@
+// https://codeforces.com/contest/1499/problem/D
 #include<bits/stdc++.h>
 
 typedef long long ll; // ld long double
@@ -12,7 +13,7 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
-const int maxN = (int) 2e7 + 5;
+const int maxN = (int) 2e7 + 5;// maxN < 1e8 - lưu ý local chạy max 1e7, OJ max 1e8. 1e9 super slow
 class Prime {
 private:
     // hàm sàng nguyên tố, có thể tách ra độc lập nếu phần này rườm ra quá
@@ -32,10 +33,6 @@ public:
     Prime(int _n = maxN) {
         this->n = _n-1;
         build(n);
-    }
-    bool isPrime(int k) {
-        assert(k < n && "Out of range maxN");
-        return is_prime[k];
     }
     map<int, int> split(int u) {
         map<int, int> pf; // prime & factor. 12 = 2*2* 3 -> pf[2] = 2, pf[3] = 1
@@ -64,30 +61,8 @@ public:
         if (i * i == k) res.push_back(i);
         return res;
     }
-    // Lấy ra số ước nguyên tố. 12 = 2*2*3 -> 2 gồm {2, 3}
-    // split().size() chạy O(logN) còn hàm này build O(N) nhưng run O(1)
-    vector<int> prime_divisor_num;
-    void calPrimeDivisorNum() {
-        prime_divisor_num.resize(maxN);
-        // Tính số nguyên tố nhỏ nhất mà k chia hết với k là toàn bộ range[1->maxN)
-        vector<int> min_divisor(maxN, -1);
-        min_divisor[1] = 1;
-        for (auto prime: primes) {
-            for (int i=1;i<=maxN/prime;i++) {
-                if (prime * i < maxN && min_divisor[prime * i] == -1) {
-                    min_divisor[prime * i] = prime;
-                }
-            }
-        }
-        // Số i = j * min_prime_divisor. j thì đc tính rồi. Nếu j chứa min_prime_divisor thì i, j cùng số ước nguyên tố. Ngược lại i có thêm 1 ước nguyên tố là min_prime_divisor so vơi j
-        for (int i = 2; i < maxN; ++i) {
-            int j = i / min_divisor[i]; // min_divisor này thực ra là divisor nào cũng được. Nhưng min_divisor được tính dễ dàng.
-            prime_divisor_num[i] = prime_divisor_num[j] + (min_divisor[i] != min_divisor[j]);
-        }
-    }
+
 };
-
-
 
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
@@ -96,7 +71,6 @@ signed main(){
         freopen("out.txt", "w", stdout);
     #endif
     Prime p;
-    p.calPrimeDivisorNum();
     int n;
     cin >> n;
     while (n--) {
@@ -128,7 +102,7 @@ signed main(){
             // có bao nhiêu cặp a'*b' coprime thỏa mãn -> số divisor của (lcm/gcd)
             // https://www.geeksforgeeks.org/given-gcd-g-lcm-l-find-number-possible-pairs-b/
             // ans += 1 << (int) p.split(a_times_b).size(); // đoạn này cần tối ưu
-            ans += 1 << p.prime_divisor_num[a_times_b];
+            ans += 1 << p.prime_divisor_num(a_times_b);
             // 17598
             // tính toán trước toàn bộ số lượng
         }
