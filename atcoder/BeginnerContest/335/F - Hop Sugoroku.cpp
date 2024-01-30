@@ -16,6 +16,86 @@ using namespace std;
 #define destructure(a) #a
 #endif
 
+const int maxN = 1000003;
+template<unsigned int mod = mod>
+struct Mint {
+    friend std::ostream& operator<<(std::ostream& os, const Mint &s) { return os << s.x;}
+    friend std::istream& operator>>(std::istream& os, Mint &s) { return os >> s.x;}
+    unsigned int x;
+ 
+    Mint() : x(0) {}
+    Mint(ll _x) { // auto convert ll to Mint.
+        _x %= mod;
+        if (_x < 0) _x += mod;
+        x = _x;
+    }
+ 
+    Mint& operator += (const Mint &a) {
+        x += a.x;
+        if (x >= mod) x -= mod;
+        return *this;
+    }
+    Mint& operator -= (const Mint &a) {
+        x += mod - a.x;
+        if (x >= mod) x -= mod;
+        return *this;
+    }
+    Mint& operator *= (const Mint &a) {
+        x = (unsigned long long)x * a.x % mod;
+        return *this;
+    }
+    Mint& operator /= (const Mint &a) {
+        return *this *= a.inv();
+    }
+
+    Mint power(ll pw) const {
+        Mint res = 1;
+        Mint cur = *this;
+        while(pw) {
+            if (pw & 1) res *= cur;
+            cur *= cur;
+            pw >>= 1;
+        }
+        return res;
+    }
+    // Chứng minh xem tại CPH - Modular inverse
+    Mint inv() const {
+        assert(x != 0);
+        unsigned int t = x;
+        unsigned int res = 1;
+        while(t != 1) {
+            unsigned int z = mod / t;
+            res = (unsigned long long)res * (mod - z) % mod;
+            t = mod - t * z;
+        }
+        return res;
+    }
+    
+    Mint operator + (const Mint &a) const {
+        return Mint(*this) += a;
+    }
+    Mint operator - (const Mint &a) const {
+        return Mint(*this) -= a;
+    }
+    Mint operator * (const Mint &a) const {
+        return Mint(*this) *= a;
+    }
+    Mint operator / (const Mint &a) const {
+        return Mint(*this) /= a;
+    }
+ 
+    bool operator == (const Mint &a) const {
+        return x == a.x;
+    }
+    bool operator != (const Mint &a) const {
+        return x != a.x;
+    }
+    bool operator < (const Mint &a) const {
+        return x < a.x;
+    }
+};
+using mint = Mint<>;
+
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
 #ifdef DEBUG
@@ -49,42 +129,41 @@ signed main(){
     //     ans %= mod;
     // }
     // Better
-    int block = (int) sqrt(n);
+    int block = sqrt(n);
     // int block = (int) sqrt(n);
-    vector<int> dp(n, 0);
+    vector<mint> dp(n, 0);
     dp[0] = 1;
-    vector store(n, vector<int>(block, 0));
+    vector store(n, vector<mint>(block, (mint)0));
     for (int index=0;index<n;index++) {
         if (a[index] < block) {
-            if (index + a[index] < n) {
+            if (a[index] + index < n) {
                 // Tính 1 nhịp rồi để sau tính tiếp
-                dp[index + a[index]] = (dp[index + a[index]] + dp[index]) % mod;
+                dp[a[index] + index] += dp[index];
                 // Tại index i + a[i] có thể push lên index + a[i] tiếp theo dp[i] đơn vị
                 // map[index][step] = dp[i];
-                store[index + a[index]][a[index]] = (store[index + a[index]][a[index]] + dp[index]) % mod;
+                store[index + a[index]][a[index]] += dp[index];
             }
         } else {
             // Tính luôn
             int x = 1;
             while (index + a[index] * x < n) {
-                dp[index + a[index] * x] = (dp[index + a[index] * x] + dp[index]) % mod;
+                dp[index + a[index] * x] += dp[index];
                 x++;
             }
         }
         // Xử lý store được lưu tại index i và push nó thêm 1 step nữa
         // tại index có thể push lên index + a[i] lên giá trị dp
         for (int step=0;step<block;step++) {
-            int value = store[index][step];
+            mint value = store[index][step];
             if (index + step < n) {
-                dp[index + step] = (dp[index + step] + value) % mod;
-                store[index + step][step] = (store[index + step][step] + value) % mod;
+                dp[index + step] += value;
+                store[index + step][step] += value;
             }
         }
     }
-    int ans = 0;
+    mint ans = 0;
     for (int i=0;i<n;i++) {
         ans += dp[i];
-        ans %= mod;
     }
     cout << ans;
     show_exec_time();
