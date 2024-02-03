@@ -445,4 +445,11 @@ signed main(){
     cout << sum_ccnum / nodes.size();
     show_exec_time();
 }
-
+/*
+Chuyển từ dạng event đơn vector<int> -> event kép vector<vector<int>> nhiều sự kiện xảy ra 1 lúc để làm giảm
+kích thước segment tree
+* giảm kích thước của segment tree xuống -> thêm tất cả sự kiện vào có vẻ ko ổn vì kích thước quá lớn
+* sự kiện khởi tạo luôn được đặt ở đầu??
+* Bỏ qua sự kiện query -> lấy đầu ra sau khi xử lý sự kiện??
+* map kia có làm chương trình bị chậm không -> thay thế bằng cách nào nhanh hơn được không? unorrdered_map??
+*/
