@@ -59,3 +59,10 @@ signed main(){
 
     show_exec_time();
 }
+/*
+Solution:
+https://www.vietjack.com/toan-lop-10/tim-khoang-cach-giua-hai-duong-thang-song-song.jsp
+http://localhost:3000/docs/competitive-programming/math/equation#gi%E1%BA%A3i-axbyc
+Verify:
+https://www.mathvn.com/2015/11/cong-thuc-tinh-dien-tich-tam-giac-theo.html
+*/
