@@ -126,7 +126,7 @@ using mint = Mint<mod>;
 struct Lznode {
     mint val = 0; // Node x; assert(x.apply(LzNode()) == x) // ***
     mint pos = 0;
-    bool is_null = true;
+    bool is_null = false;
     // Apply 1 node lần thứ 2
     static Lznode composition(Lznode first, Lznode second) {
         if (first.is_null) return second;
@@ -135,28 +135,19 @@ struct Lznode {
         return Lznode {
             (first.val * first.pos - first.val * first.pos * second.pos + second.val * second.pos) / newpos,
             newpos,
-            false // is_null
-        };
-    }
-    static Lznode v(mint val, mint pos) {
-        return Lznode {
-            val, // ***
-            pos,
-            false // is_null
         };
     }
 };
 
 struct Node {
     mint val = 0; // ***
-    bool is_null = true;
+    bool is_null = false;
     // Hàm merge: thể hiện việc merge 2 node từ dưới lên trên
     static Node merge(Node l, Node r) {
         if (l.is_null) return r;
         if (r.is_null) return l;
         return Node {
-            l.val + r.val, // ***
-            false // is_null
+            0, // ***
         };
     }
     friend Node operator+(Node l, Node r) { return Node::merge(l, r); }
@@ -165,12 +156,6 @@ struct Node {
     void apply(Lznode lz) {
         if (lz.is_null) return;
         val = val * (mint(1) - lz.pos) + lz.val * lz.pos;
-    }
-    static Node v(mint val) {
-        return {
-            val, // ***
-            false // is_null
-        };
     }
     Node operator!() { return *this; } // dùng cho thao tác query có xét chiều. Node a + Node b = !(Node b + Node a)
     friend std::ostream& operator<<(std::ostream& os, const Node& s) { return os << destructure(s);}
@@ -190,7 +175,7 @@ struct LazySegtree {
     void push(int k) {
         all_apply(2 * k, lz[k]);
         all_apply(2 * k + 1, lz[k]);
-        lz[k] = Lznode();
+        lz[k] = Lznode{.is_null = true};
     }
   public:
     LazySegtree() {}
@@ -198,8 +183,8 @@ struct LazySegtree {
         this->N = (int) v.size();
         log = 0; while ((1U << log) < (unsigned int)(N)) log++; 
         size = 1 << log;
-        data.resize(2 * size, Node());
-        lz.resize(size, Lznode());
+        data.resize(2 * size, Node{.is_null = true});
+        lz.resize(size, Lznode{.is_null = true});
         for (int i = 0; i < N; i++) data[size + i] = v[i];
         for (int i = size - 1; i >= 1; i--) update(i);
     }
@@ -214,9 +199,8 @@ struct LazySegtree {
 
     Node query(int l, int r) {
         r++;
-        dbg(l, r);
         assert(0 <= l && l <= r && r <= N);
-        if (l == r) return Node();
+        if (l == r) return Node{.is_null = true};
 
         l += size; r += size;
 
@@ -225,7 +209,7 @@ struct LazySegtree {
             if (((r >> i) << i) != r) push((r - 1) >> i);
         }
 
-        Node sml = Node(), smr = Node();
+        Node sml = Node{.is_null = true}, smr = Node{.is_null = true};
         while (l < r) {
             if (l & 1) sml = Node::merge(sml, data[l++]);
             if (r & 1) smr = Node::merge(data[--r], smr);
@@ -265,7 +249,6 @@ struct LazySegtree {
         return result;
     }
 };
-// http://localhost:3000/docs/competitive-programming/range-queries/lazy-segment-tree
 
 signed main(){
     ios::sync_with_stdio(0); cin.tie(0);
@@ -279,7 +262,7 @@ signed main(){
     for (int i=0;i<n;i++) {
         int x;
         cin >> x;
-        a[i] = Node::v(mint(x));
+        a[i] = Node{mint(x)};
     }
     LazySegtree seg;
     seg.build(a);
@@ -287,7 +270,7 @@ signed main(){
         int l, r; mint val;
         cin >> l >> r >> val;
         l--; r--;
-        seg.update(l, r, Lznode::v(val, mint(1) / (r-l+1)));
+        seg.update(l, r, Lznode{val, mint(1) / (r-l+1)});
     }
     for (int i=0;i<n;i++) {
         auto node = seg.query(i, i);
@@ -295,8 +278,3 @@ signed main(){
     }
     show_exec_time();
 }
-/*
-Node chứa val
-Lznode chứa val và posibility
--> các hàm merge, composition, ... có thể dễ dàng (dùng nháp là ra)
-*/
