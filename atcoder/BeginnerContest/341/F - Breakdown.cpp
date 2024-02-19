@@ -134,7 +134,7 @@ signed main(){
 Tóm tắt lời giải:
 Tại đây mỗi node có 1 w và có thể truyền đi cho các node con với sum w < w node
 khi truyền từ node 1 -> các node con thì các node con có thể truyền tiếp cho các node cháu
-=> cần phải chọn các node con sao cho có thẻ truyền đi nhiều nhất có thể.
+=> cần phải chọn các node con sao cho có thể truyền đi nhiều nhất có thể.
 => cần tính được 1 node có 1 point thì sẽ truyền đi được tối đa bao nhiêu lần.
 Ta thấy node có W lớn truyền tới W nhỏ -> chỉ cần giữ lại đồ thị với cạnh (u, v) với w[u] > w[v]
 Dựng toposort. Từ node có depend thấp nhất tính được lượng point có thể truyền đi tại node đó.
@@ -149,6 +149,6 @@ Ta có
 * w[node] là cost của các item cần chọn
 * cnt[node] là value tương ứng của item
 => lấy ra các item để sum value max và sum cost nằm trong maxCost
-Sau khi chọn được các node cần delivery thì point node hiện tại về 0 còn point của mỗi node con tăng lên 1
+Sau khi chọn được các node cần delivery thì point node hiện tại về 0 còn point của mỗi node con tăng lên lượng point của node đó
 Lần lượt từng node theo thứ tự topo là xong
 */
