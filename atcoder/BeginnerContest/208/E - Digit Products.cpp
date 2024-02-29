@@ -1,4 +1,4 @@
-// [Atcoder|Codeforces].abcxxx.F
+// https://atcoder.jp/contests/abc208/tasks/abc208_e
 #include<bits/stdc++.h>
 
 typedef long long ll; // double long double
@@ -186,6 +186,9 @@ signed main(){
 /*
 Lưu ý duy nhất ở bài này là số có dạng xxx0xx có ít nhất 1 số 0 bên trong.
 Nếu duyệt trái qua phải xxx mà x*x*x > k loại đi thì là ko đúng vì xxx có lớn bao nhiêu thì số 0 nhân vào đều thành 0 nên đều được đếm
-Bài này có thể làm nhanh hơn bằng cách duyệt digitDP chỉ trên số không chứa số 0 rồi đếm số lượng số bao gồm ít nhất 1 số 0 sau => có lẽ nếu làm theo cách này thì xứng đáng với rate 2k cho bài này.
-Tại đây chỉ đơn giản thêm 1 trường [map<int/mul, int/cnt>] là xong chứ ko khó như mk nghĩ ban đầu rằng mul sẽ có rất nhiều giá trị và ko thể hội tụ
+
+Nếu đếm trực tiếp từ 0 tới n thì mọi số sẽ có các trailing zero đứng đầu -> đếm sai. Ví dụ: n = 100, k = 1 => số có 1 chữ số sẽ được duyệt thành 01, 02,...09 và đều thỏa mãn => lỗi.
+=> chỉ trên số không chứa số 0 rồi đếm số lượng số bao gồm ít nhất 1 số 0 sau.
+
+Nếu dùng digitDP trên các khoảng số có cùng digit num thì sẽ ko còn tình trạng này và rất dễ dàng xử lý chỉ với việc thêm 1 dimension map<int, int>
 */
