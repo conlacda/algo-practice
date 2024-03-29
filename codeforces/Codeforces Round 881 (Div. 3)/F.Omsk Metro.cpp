@@ -164,25 +164,25 @@ private:
     vector<Node> dat;
 public:
     SegmentTree() {}
-    SegmentTree(vector<Node> v){ build(v);}
-    void build(vector<Node> v) {
-        n = 1;
-        while (n < (int) v.size()) n *= 2;
-        dat.resize(2 * n - 1);
+    SegmentTree(vector<Node>& v){ build(v);}
+    void build(vector<Node>& v) {
+        n = 1; while (n < (int) v.size()) n *= 2;
+        dat.resize(2 * n - 1, Node{.is_null = true});
         for (int i=0;i<(int) v.size();i++) dat[n + i - 1] = v[i];
         for (int i = n - 2; i >= 0; i--) dat[i] = dat[i * 2 + 1] + dat[i * 2 + 2];
     }
-    void set_val(int i, Node x) {
-        i += n - 1;
-        dat[i] = x;
-        while (i > 0) {
-            i = (i - 1) / 2;
-            dat[i] = dat[i * 2 + 1] + dat[i * 2 + 2];
+    void set(int index, Node x) {
+        index += n - 1;
+        dat[index] = x;
+        while (index > 0) {
+            index = (index - 1) / 2;
+            dat[index] = dat[index * 2 + 1] + dat[index * 2 + 2];
         }
     }
+    template<class... P> void set(int index, P... params) { set(index, Node{params...});}
     Node query(int l, int r){
         assert(l <= r);
-        Node left = Node(), right = Node();
+        Node left = Node{.is_null = true}, right = Node{.is_null = true};
         l += n - 1; r += n;
         while (l < r) {
             if ((l & 1) == 0) left = left + dat[l];
@@ -190,6 +190,14 @@ public:
             l = l / 2; r = (r - 1) / 2;
         }
         return left + right;
+    }
+    // Retrieve current state of vector
+    vector<Node> original() {
+        vector<Node> res;
+        for (int i=0;i<n;i++){
+            res.push_back(query(i, i));
+        }
+        return res;
     }
 };
 
@@ -280,7 +288,7 @@ public:
     }
 
     void set_val(int u, Node node){
-        seg.set_val(pos[u], node);
+        seg.set(pos[u], node);
     }
  
     void set_val_for_edge(int u, int v, Node val) {
