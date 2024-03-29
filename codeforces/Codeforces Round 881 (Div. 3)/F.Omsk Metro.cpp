@@ -27,7 +27,7 @@ struct Node {
     int max_suf = 0;
     int min_suf = 0;
     int whole = 0;
-    bool is_null = true;
+    bool is_null = false;
     friend Node operator+(Node a, Node b) {
         if (a.is_null) return b;
         if (b.is_null) return a;
@@ -41,9 +41,6 @@ struct Node {
             a.whole + b.whole,
             false
         };
-    }
-    static Node v(int k) {
-        return Node{k, k, k, k, k, k, k, false};
     }
     Node operator!() {
         Node ans;
@@ -259,7 +256,7 @@ public:
         // pos[] lưu vị trí của các node theo thứ tự duyệt. Duyệt trong 1 khối (subtree, chain) -> duyệt từ khối này nối sang khối khác
         vector<Node> wvt(n); // weight of verticies - làm phẳng tree ra dạng [[chain1][chain2][...]...]
         // khi này muốn query(u, v) thì sẽ chia ra [u..->tailu][...][headv..->v] rồi query từng khúc 1
-        for (int i=0;i<n;i++) wvt[pos[i]] = Node::v(weight[i]); // làm phẳng cây ra thành 1 mảng với các đoạn segment nối tiếp nhau 
+        for (int i=0;i<n;i++) wvt[pos[i]] = Node{weight[i],weight[i],weight[i],weight[i],weight[i],weight[i],weight[i]}; // làm phẳng cây ra thành 1 mảng với các đoạn segment nối tiếp nhau 
         // i là vertex, pos[i] tương ứng là index trên euler tour
         seg.build(wvt);
     }
