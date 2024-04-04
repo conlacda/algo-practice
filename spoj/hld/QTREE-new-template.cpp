@@ -149,7 +149,7 @@ struct HLD {
             right = right + seg.query(pos[chain.second], pos[chain.first]);
 
         // bỏ root nếu trọng số nằm trên cạnh // ***
-        return (!left) + root + right; // ***
+        return (!left) + right; // ***
     }
 
     void set_node(int u, Node node) {
