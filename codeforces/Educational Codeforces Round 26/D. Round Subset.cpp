@@ -84,3 +84,12 @@ signed main(){
     cout << ans;
     cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s✅\n";
 }
+/*
+Xác định state: có 4 tham số index, remain - số lượng có thể pick còn lại, p5, p2 là số lượng số 5&2 vì chỉ có 2 số này tạo ra số 0, còn lại thì bỏ qua.
+dp[index][remain][map<int/p5, int/p2>]
+dp[index][remain][p5] = p2
+có 2 trường hợp dp. Tại index i chọn hoặc ko chọn.
+* Ko chọn thì dp[index][remain][every p5] = dp[index-1][remain][every p5]
+* Chọn thì dp[index-1][remain][p5] => dp[index][remain-1][p5 + cur_num_5] = dp[index-1][remain][p5] + cur_num_2;
+    Với mọi cặp p5, c2 tại dp[index-1][remain] thì nếu pick vào index -> remain giảm đi 1, số lượng p5 = p5 + cur_num_5, còn số lượng p2 là giá trị sẽ bằng p2 + cur_num_2 với p2 chính là dp[index-1][remain][p5]
+*/
