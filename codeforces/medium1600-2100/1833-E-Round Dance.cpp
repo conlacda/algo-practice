@@ -14,54 +14,41 @@ using namespace std;
 #include "debug.cpp"
 #else
 #define dbg(...)
-#define show_exec_time()
-#define destructure(a) #a
 #endif
 
 class DSU {
  public:
-  vector<int> parent, _rank;
-  int N;
-  DSU(int N) {
-    this->N = N;
-    this->parent.resize(N);
-    this->_rank.resize(N);
-    for (int i = 0; i < N; i++) {
-      this->make_set(i);
+    vector<int> parent, size;
+    int n;
+    DSU(int _n) {
+        n = _n;
+        parent.resize(n);
+        size.resize(n, 1);
+        std::iota(parent.begin(), parent.end(), 0);   
     }
-  }
 
-  void make_set(int v) {
-    this->parent[v] = v;
-    this->_rank[v] = 0;
-  }
-
-  int find_set(int v) {
-    assert(0 <= v && v < N);
-    if (v == parent[v]) {
-      return v;
+    int find(int v) {
+        assert(0 <= v && v < n);
+        if (v == parent[v]) return v;
+        return parent[v] = find(parent[v]);
     }
-    return parent[v] = find_set(parent[v]);
-  }
 
-  void merge_set(int a, int b) {
-    a = find_set(a);
-    b = find_set(b);
-    if (a != b) {
-      if (_rank[a] < _rank[b]) {
-        swap(a, b);
-      }
-      parent[b] = a;
-      if (_rank[a] == _rank[b]) {
-        _rank[a]++;
-      }
+    void merge(int a, int b) {
+        a = find(a);
+        b = find(b);
+        if (a != b) {
+            if (size[a] < size[b]) swap(a, b);
+            parent[b] = a;
+            size[a] += size[b];
+        }
     }
-  }
+    bool isSame(int a, int b) {
+        return find(a) == find(b);
+    }
 };
 
 struct Node {
     int nodeNum = 1, connectionNum = 0;
-    friend std::ostream& operator<<(std::ostream& os, const Node &s) { return os << destructure(s);}
     bool isFull() {
         return this->nodeNum * 2 == this->connectionNum;
     }
@@ -85,20 +72,20 @@ void solve() {
     DSU dsu(n);
     for (int u=0;u<n;u++) {
         for (auto v: adj[u]) {
-            int ru = dsu.find_set(u);
-            int rv = dsu.find_set(v);
+            int ru = dsu.find(u);
+            int rv = dsu.find(v);
             if (ru == rv) {
                 nodes[ru] = Node{nodes[ru].nodeNum, nodes[ru].connectionNum + 1};
             } else {
-                dsu.merge_set(ru, rv);
-                int r = dsu.find_set(ru);
+                dsu.merge(ru, rv);
+                int r = dsu.find(ru);
                 nodes[r] = Node{nodes[ru].nodeNum + nodes[rv].nodeNum, nodes[ru].connectionNum + nodes[rv].connectionNum + 1};
             }
         }
     }
     unordered_set<int> roots;
     for (int i=0;i<n;i++) {
-        roots.insert(dsu.find_set(i));
+        roots.insert(dsu.find(i));
     }
     int full = 0, notFull = 0;
     for (auto v: roots) {
@@ -117,5 +104,5 @@ signed main(){
     int n;
     cin >> n;
     while (n--) solve();
-    show_exec_time();
+    cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s✅\n";
 }
