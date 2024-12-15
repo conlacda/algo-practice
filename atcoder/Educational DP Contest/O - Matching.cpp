@@ -23,7 +23,7 @@ signed main() {
     freopen("out.txt", "w", stdout);
 #endif
     /*
-    dp[{set of woman}][cur_index]
+    dp[cur_index][{set of woman}]
     */
     int n;
     cin >> n;
@@ -31,27 +31,27 @@ signed main() {
     for (auto&v: a)
         for (auto&u: v) cin >> u;
 
-    vector<vector<int>> dp(1 << n, vector<int>(n, 0));
+    vector<vector<int>> dp(n, vector<int>(1 << n, 0));
     // Init
     for (int i=0;i<n;i++) {
         if (a[0][i] == 1)
-            dp[1 << i][0] = 1; // dp[woman_mask][last_index]
+            dp[0][1 << i] = 1; // dp[last_index][woman_mask]
     }
     // Trans
     auto getbit = [](int bit, int i) -> int { return (bit >> i) & 1; };
     auto turnon = [](int bit, int i) -> int { return bit | (1 << i); };
-    for (int mask=1; mask < (1 << n); mask++) {
-        for (int man=1;man<n;man++) {
+    for (int man=1;man<n;man++) {
+        for (int mask=1; mask < (1 << n); mask++) {
             for (int woman=0;woman<n;woman++) {
-                if (dp[mask][man-1] != 0 && a[man][woman] == 1 && !getbit(mask, woman)) {
-                    dp[turnon(mask, woman)][man] += dp[mask][man - 1];
-                    dp[turnon(mask, woman)][man] %= mod;
+                if (dp[man-1][mask] != 0 && a[man][woman] == 1 && !getbit(mask, woman)) {
+                    dp[man][turnon(mask, woman)] += dp[man - 1][mask];
+                    dp[man][turnon(mask, woman)] %= mod;
                 }
             }
         }
     }
     // Ans
-    cout << dp[(1<<n) - 1][n-1];
+    cout << dp[n-1][(1<<n) - 1];
 
     cerr << "Time : " << (double)clock() / (double)CLOCKS_PER_SEC << "s✅\n";
 }
