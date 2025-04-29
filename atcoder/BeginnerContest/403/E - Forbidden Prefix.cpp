@@ -18,19 +18,17 @@ const int MAX_SZ = (int) 2e6; // the maximum number of nodes
 
 struct Node {
     int id, pid; // parent id
-    int cnt = 0;
-    bool is_leaf = false;
-    set<int> children; // mảng chứa id của children
+    int count = 0; // số lần string được thêm vào trie
+    set<int> children{}; // mảng chứa id của children
     char val;
     static Node v(int id, int pid, char val) {
         return Node {
             .id = id,
             .pid = pid,
-            .is_leaf = false,
-            .children = {},
             .val = val
         };
     }
+    bool is_leaf() { return count > 0;}
     int findChild(char val);
     int findDescendant(string s);
     void addChild(int childId) {children.insert(childId);}
@@ -46,14 +44,14 @@ int Node::findChild(char val) {
 }
 // Tìm node cuối cùng mà đi từ root tới đó = s
 int Node::findDescendant(string s) {
-    int _id = this->id;
+    int id = this->id;
     for (auto&v: s) {
-        _id = nodes[_id].findChild(v);
-        if (_id == -1) {
+        id = nodes[id].findChild(v);
+        if (id == -1) {
             return -1;
         }
     }
-    return _id;
+    return id;
 }
 
 struct Trie {
@@ -74,6 +72,7 @@ private:
 public:
     int ROOT_ID;
     vector<int> freeNodeIds; // danh sách node id có thể sử dụng
+    // chỉ định rootId khi có nhiều Trie, rootId sẽ là node đầu tiên trie đó dùng tránh dùng chung
     Trie(int rootId = 0): ROOT_ID(rootId) {
         freeNodeIds.resize(MAX_SZ, 0);
         std::iota(freeNodeIds.begin(), freeNodeIds.end(), rootId);
@@ -93,8 +92,7 @@ public:
             }
             curid = childId;
         }
-        nodes[curid].is_leaf = true;
-        nodes[curid].cnt++;
+        nodes[curid].count++; // set bằng 1 nếu 1 string chỉ được insert 1 lần
     }
 
     // Xóa toàn bộ string có prefix trong trie. Trả về số lượng đã xóa.
@@ -104,11 +102,11 @@ public:
             return 0;
 
         // số lượng string match prefix bị xóa - chính là số lượng leaf bị xóa
-        int prefix_matched = nodes[id].cnt;
+        int prefix_matched = nodes[id].count; 
         // Xóa toàn bộ descendant
         // Recycle node và mọi descendant với dfs()
         std::function<void(int)> dfs_recycle = [&](int id) {
-            if (nodes[id].is_leaf) prefix_matched += nodes[id].cnt;
+            prefix_matched += nodes[id].count;
             auto children = nodes[id].children;
             for (auto v: children)
                 dfs_recycle(v);
@@ -119,7 +117,7 @@ public:
 
         // Xóa từ node hiện tại đi lên
         // Tricky: đánh dấu nó hiện tại là lá rồi dùng erase để xóa là xong
-        nodes[id].is_leaf = true;
+        nodes[id].count++;
         erase(s);
         return prefix_matched;
     }
@@ -131,10 +129,10 @@ public:
             curid = nodes[curid].findChild(v);
             if (curid == -1) return false; // không tìm thấy
         }
-        if (!nodes[curid].is_leaf)
+        if (!nodes[curid].is_leaf())
             return false;
 
-        nodes[curid].is_leaf = false;
+        nodes[curid].count = 0;
         // Nếu còn node bên dưới thì không làm gì cả
         if (nodes[curid].children.size() > 0) {
             return true;
@@ -144,7 +142,7 @@ public:
         while (curid != ROOT_ID) {
             recycle(curid);
             curid = nodes[curid].pid;
-            if (nodes[curid].is_leaf or nodes[curid].children.size() > 0)
+            if (nodes[curid].is_leaf() or nodes[curid].children.size() > 0)
                 break;
         }
         return true;
@@ -155,7 +153,7 @@ public:
         for (auto&v: longStr) {
             id = nodes[id].findChild(v);
             if (id == -1) return false;
-            if (nodes[id].is_leaf) return true;
+            if (nodes[id].is_leaf()) return true;
         }
         return false;
     }
